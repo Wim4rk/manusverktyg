@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# manus — verktyg för att gå från markdown till färdigt manus.
+#
+#   manus lint    städar texten: en mening per rad, ett stycke per tomrad
+#   manus bygg    kör Pandoc på alla numrerade dokument i katalogträdet
+#
+# Det här är bara vägvisaren. Själva arbetet ligger i lib/, och de
+# gemensamma byggtillgångarna (stilmall, lua-filter) i tillgangar/.
+
+# Följ symlänken hela vägen hem. Kommandot är tänkt att ligga som en länk i
+# ~/.local/bin, och då pekar $BASH_SOURCE på länken — inte på projektet där
+# lib/ och tillgangar/ faktiskt finns.
+SJALVA_FILEN="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+MANUS_ROT="$(cd "$(dirname "$SJALVA_FILEN")/.." && pwd)"
+export MANUS_ROT
+
+readonly PROGNAME="manus"
+
+visa_hjalp() {
+    cat <<EOF
+$PROGNAME — från markdown till färdigt manus.
+
+ANVÄNDNING
+    $PROGNAME <kommando> [FLAGGOR]
+
+KOMMANDON
+    lint     Städar texten. Lägger varje mening på en egen rad och skiljer
+             stycken åt med exakt en tomrad. Rör aldrig originalet om du
+             inte ber om det.
+                 $PROGNAME lint --help
+
+    bygg     Kör Pandoc på alla dokument i katalogträdet vars namn börjar
+             med tre siffror, i nummerordning. Bygger EPUB, PDF eller DOCX.
+                 $PROGNAME bygg --help
+
+    hjälp    Den här texten. Även -h och --help.
+
+SNABBSTART
+    Ställ dig i bokens katalog:
+
+        $PROGNAME bygg --lista          # kontrollera kapitelordningen
+        $PROGNAME bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
+
+VAR SAKER LIGGER
+    Projektet:      $MANUS_ROT
+    Byggtillgångar: $MANUS_ROT/tillgangar
+EOF
+}
+
+if [ $# -eq 0 ]; then
+    visa_hjalp
+    exit 0
+fi
+
+kommando="$1"
+shift
+
+case "$kommando" in
+    lint)
+        MANUS_KOMMANDO="$PROGNAME lint" exec "$MANUS_ROT/lib/lint.sh" "$@"
+        ;;
+    bygg)
+        MANUS_KOMMANDO="$PROGNAME bygg" exec "$MANUS_ROT/lib/bygg.sh" "$@"
+        ;;
+    hjälp|hjalp|-h|--help|help)
+        visa_hjalp
+        ;;
+    version|--version)
+        echo "$PROGNAME (manusverktyg)"
+        ;;
+    *)
+        echo "$PROGNAME: okänt kommando '$kommando'" >&2
+        echo "Kör '$PROGNAME hjälp' för vilka som finns." >&2
+        exit 1
+        ;;
+esac

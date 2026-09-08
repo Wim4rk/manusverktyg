@@ -1,0 +1,5 @@
+*.pandoc.md
+*.bak
+bygge/
+ut/
+korrektur/

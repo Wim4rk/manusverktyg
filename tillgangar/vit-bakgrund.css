@@ -1,0 +1,16 @@
+/* Vit bakgrund.
+ *
+ * Pandocs förvalda stilmall sätter html { background-color: #fdfdfd },
+ * alltså inte riktigt vitt. På en skärm läses det som en grå ton, och i
+ * en e-boksläsare som redan har egen bakgrund blir det en synlig platta
+ * som inte hör dit.
+ *
+ * Den här filen läggs till EFTER pandocs egen stilmall och vinner därför.
+ * Den rör ingenting annat än bakgrunden — typsnitt, marginaler och
+ * radavstånd lämnas åt Pandoc och åt läsaren.
+ */
+
+html,
+body {
+    background-color: #ffffff;
+}
