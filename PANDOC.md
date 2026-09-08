@@ -45,9 +45,9 @@ manus lint Kapitel05.md
 `manus bygg` hoppar över `*.pandoc.md`, så byggresultat råkar aldrig komma
 med som källdokument.
 
-**Katalog-/filnamn måste vara nollutfyllda** (`01_`, `02_`, … `10_`) för att
+**Katalog-/filnamn måste vara nollutfyllda** (`010_`, `020_`, … `100_`) för att
 sorteringen ovan (och globbningen nedan) ska ge rätt läsordning. `2_` sorterar
-efter `10_` annars.
+annars efter `10_`.
 
 ---
 
@@ -76,7 +76,7 @@ alltså ur numreringen:
 ```
 
 **Kontrollera alltid ordningen först.** Fel kapitelordning är det enda felet
-som inte syns förrän någon annan läser boken:
+som inte syns förrän någon läser boken:
 
 ```bash
 manus bygg --lista
@@ -92,8 +92,8 @@ manus bygg --lint -o MinBok.pdf -- \
   -V mainfont="Liberation Serif" \
   -V fontsize=12pt \
   -V geometry:margin=1in \
-  --metadata title="Min bok" \
-  --metadata author="Olov Wimark"
+  --metadata title="Nomen libri" \
+  --metadata author="Actor Sum"
 ```
 
 Testat och verifierat i sin helhet. Några ord om varje del:
@@ -120,7 +120,7 @@ Testat och verifierat i sin helhet. Några ord om varje del:
 Stilmallen `custom-reference.docx` och `swedish-quotes.lua` plockas upp
 automatiskt — se avsnitt 3.1. För PDF spelar bara filtret roll.
 
-### EPUB — för alfa-/betaläsare
+### EPUB — för alfa-/betaläsare. Eller självpublicering...
 
 ```bash
 manus bygg --lint -o MinBok.epub -- --toc --metadata title="Min bok"
@@ -212,8 +212,8 @@ tresiffriga prefix finns.
 Ett `metadata.yaml` i bokens rotkatalog:
 ```yaml
 ---
-title: "Bokens titel"
-author: "Ditt namn"
+title: "Nomen libri"
+author: "Scriptor Sum"
 lang: sv
 ---
 ```
@@ -264,11 +264,6 @@ i ett stycke, och är osynligt i alla Pandoc-format.
 En kommentar får gå över flera rader — `manus lint` lämnar allt mellan
 `<!--` och `-->` orört och delar aldrig upp det i meningar.
 
-> **Gamla filer:** `// anteckning` konverterades förr automatiskt, men den
-> omvandlingen är borttagen. En sådan rad är numera helt vanlig text och
-> syns i det renderade resultatet. Sök igenom äldre kapitel efter `//` och
-> skriv om dem till `<!-- ... -->`.
-
 ---
 
 ## 8. Svenska citattecken
@@ -291,12 +286,12 @@ Det som faktiskt spelar roll för skönlitterär text:
 * **Smart typografi (på som standard):** `--` blir en tankstreck (–), `---`
   blir em-streck (—), `...` blir ellips (…), raka citattecken blir kurviga
   — men **engelska** kurviga citattecken (`“hej”`), inte svenska (`”hej”`).
-  `lang: sv` ändrar inte detta. Löst med `tillgangar/swedish-quotes.lua`,
+  `lang: sv` ändrar inte detta. Här är det öst med `tillgangar/swedish-quotes.lua`,
   som `manus bygg` skickar med automatiskt.
   Skriv `--`, `---` och `...` rakt av och lita på att Pandoc gör om dem vid
   rendering. Vill du stänga av HELA smart-typografin: `-f markdown-smart`
   (minustecken före tillägget stänger av det).
-* **Genomstruken text:** `~~struket~~` → ~~struket~~.
+* **Genomstruken text:** `~~struket~~` →~~struket~~.
 * **Fotnoter:** `Text med fotnot.[^1]` och längre ner `[^1]: Fotnotens
   innehåll.` — fungerar i alla tre formaten.
 * **Radblock (för dikter/sånger där radbrytningen är meningsfull):** börja
@@ -304,7 +299,7 @@ Det som faktiskt spelar roll för skönlitterär text:
   som separata stycken.
 * **Betoning är striktare än du kanske väntar dig:** `ord_med_understreck_i`
   triggar INTE kursivering mitt i ett ord (till skillnad från vissa andra
-  markdown-varianter) — bra att veta om du använder `_` i egna namn.
+  markdown-varianter) — bra att veta om du använder `_`.
 * **Rå HTML/LaTeX slinker igenom orört** till format som stödjer det — det
   är exakt detta som gör att `<!-- kommentarer -->` fungerar överallt.
 * Tabeller, definitionslistor och rubrik-attribut (`{#id .klass}`) finns

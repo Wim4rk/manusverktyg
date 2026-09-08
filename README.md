@@ -73,7 +73,7 @@ men bara genom **numrerade** kataloger.
 
 | | Krav | Varför |
 | --- | --- | --- |
-| **Filer** | tre siffror först | kapitel är många och numreringen behöver luft: `010`, `020`, `021` |
+| **Filer** | tre siffror först | kapitel kan vara  många och numreringen behöver luft: `010`, `020`, `021` |
 | **Kataloger** | en siffra räcker | delar är få: `01_början`, `02_urtid` |
 
 **En katalog som inte börjar med en siffra betyder att innehållet inte hör
@@ -82,14 +82,14 @@ filerna i dem är numrerade — vilket de gärna är, eftersom man vill kunna
 bygga dem för sig.
 
 ```
-Tidens_älv/
+Roman/
 ├── 01_början/
 │   ├── 010_prolog.md          ✓
-│   └── 020_ristningar.md      ✓
+│   └── 020_inledning.md       ✓
 ├── 02_urtid/
 │   ├── 010_uppväxt.md         ✓
 │   ├── research/              ✗  hoppas över helt
-│   │   └── 010_boplatser.md      (även om filen är numrerad)
+│   │   └── 010_familj.md      (även om filer är numrerad)
 │   └── makulatur/             ✗
 └── skisser/                   ✗
 ```
@@ -98,7 +98,7 @@ Katalogen du **står i** räknas alltid, oavsett vad den heter. Egna
 anteckningar byggs alltså så här:
 
 ```bash
-cd Tidens_älv/02_urtid/research
+cd Roman/02_urtid/research
 manus bygg -o anteckningar.pdf
 ```
 
@@ -110,8 +110,9 @@ sitt eget innehåll och delarna kommer i nummerordning:
 ```
 001_forord.md
 01_början/010_prolog.md
-01_början/020_ristningar.md
+01_början/020_inledningar.md
 02_urtid/010_uppväxt.md
+...
 09_epilog/010_slutet.md
 ```
 
@@ -134,8 +135,8 @@ Ange därför reserver i metadatan:
 
 ```yaml
 ---
-title: Tidens älv
-author: Olov Wimark
+title: Roman
+author: Scriptor Sum
 lang: sv
 
 mainfont: "Garamond"
@@ -176,7 +177,7 @@ Tre filer plockas upp automatiskt om de finns:
 Pandocs förvalda stilmall sätter `html { background-color: #fdfdfd }` — inte
 riktigt vitt, vilket läses som en grå ton i e-boksläsare. `vit-bakgrund.css`
 läggs efter pandocs egen och vinner. Den rör ingenting annat än bakgrunden;
-typsnitt och marginaler lämnas åt läsaren.
+typsnitt och marginaler lämnas som de är.
 
 ### Stilmallen — så fungerar den
 
@@ -242,11 +243,13 @@ Pandoc kan skriva ut sin egen som utgångspunkt:
 pandoc --print-default-data-file reference.docx > custom-reference.docx
 ```
 
-Öppna den i Word eller LibreOffice, ändra formatmallarna (`Body Text`,
-`Heading 1` …), och spara. Skriv ingen brödtext i den — bara stilarna
-används.
+Öppna den i Word, ändra formatmallarna (`Body Text`, `Heading 1` …), och
+spara. Skriv ingen brödtext i den — bara stilarna används.
 
-## Katalogstruktur
+Den bifogade filen i projektet är pandocs standard. Det är bara att formatera
+den och jobba vidare.
+
+## Projektets katalogstruktur
 
 ```
 bin/manus              vägvisaren: manus lint / manus bygg

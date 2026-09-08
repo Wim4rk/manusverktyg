@@ -126,7 +126,7 @@ ORDNING
 
         001_forord.md
         01_borjan/010_prolog.md
-        01_borjan/020_ristningar.md
+        01_borjan/020_staden.md
         02_urtid/010_uppvaxt.md
         09_epilog/010_slutet.md
 
