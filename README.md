@@ -4,8 +4,9 @@ Två verktyg för vägen från markdown till färdigt manus, samlade under ett
 kommando: `manus`.
 
 ```bash
-manus lint    # en mening per rad, städade mellanslag
-manus bygg    # kör Pandoc på alla numrerade dokument, i nummerordning
+manus lint       # en mening per rad, städade mellanslag
+manus pratminus  # citatrepliker till pratminus
+manus bygg       # kör Pandoc på alla numrerade dokument, i nummerordning
 ```
 
 Allt — kommandon, hjälptexter och dokumentation — är på svenska.
@@ -125,6 +126,116 @@ boken.
 
 `kapitel_001.md` och `01_utkast.md` tas inte med: siffrorna måste sitta
 först, och filer kräver tre. Dolda kataloger och `*.pandoc.md` hoppas över.
+
+## Repliker: citattecken till pratminus
+
+Svensk skönlitteratur sätter oftast repliker med pratminus. Har du ett
+manus skrivet med citattecken gör `manus pratminus` om dem:
+
+```
+”Heter du Elof?” frågade Eva.   →   -- Heter du Elof? frågade Eva.
+```
+
+Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
+`--in-place`, och då sparas en `.bak`. `--lista` visar varje rad som skulle
+ändras, före och efter, utan att skriva något — kör alltid det först.
+
+En rad görs om bara när alla tre stämmer: den **börjar** med ett
+citattecken, har ett avslutande på samma rad, och ser ut som en replik —
+slutar med skiljetecken innanför citatet eller följs av ett kommatecken
+utanför det.
+
+Den sista regeln finns för att ett citat först på raden inte alltid är en
+replik:
+
+```
+”Nomen libri” är arbetsnamnet.        lämnas orörd — en titel, inte en replik
+”Han sa ”hej” till mig”, sa hon.      lämnas orörd — nästlade citat
+```
+
+Hellre en replik du får göra om för hand än en mening som tyst blir
+förvanskad. YAML-frontmatter, kodblock och HTML-kommentarer kopieras rakt
+igenom — i arbetsanteckningar är citattecken ofta obalanserade med flit.
+
+**Fler än en replik i stycket.** Det vanligaste mönstret i svensk dialog är
+replik, berättande, replik i ett och samma stycke. Ett manus satt med
+pratminus har i princip inga citattecken alls utom vid äkta citat, så alla
+replikerna görs om och stycket delas framför varje ny:
+
+```
+”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
+```
+```
+-- Jag gjorde det. Han såg bort.
+
+-- Det var nödvändigt.
+```
+
+Berättandet stannar hos repliken det följer på.
+
+### Stycket är enheten, inte raden
+
+Framåtläsningen går över radgränser men stannar **alltid vid tomraden**.
+Det ger två saker.
+
+**Redan lintade filer fungerar.** En replik som `manus lint` delat över
+flera rader är fortfarande ett stycke, och känns igen som en hel replik:
+
+```
+”Hej. Jag heter Eva.
+Vad heter du?” frågade hon.
+```
+
+Ordningen mot `manus lint` spelar därför ingen roll. Lint ombryter inom
+stycket och rör aldrig tomraderna, så ett stycke är samma sak före och
+efter. Kör lint efteråt om du vill ha en mening per rad igen.
+
+**Ett saknat citattecken blir ofarligt.** Ett stycke med udda antal
+citattecken är obalanserat och lämnas helt orört:
+
+```
+Yhla suckade. ”Var gömde du honom? frågade hon.
+```
+
+Utan taket vid tomraden skulle det citatet svälja text ända fram till nästa
+citattecken, kanske flera stycken bort.
+
+### Handpåläggning
+
+Varje körning avslutas med en lista över de stycken som lämnades orörda,
+med fil, radnummer och texten — även en skarp konvertering. Den som just
+gjort om hela boken måste få veta vad som **inte** blev gjort:
+
+```
+HANDPÅLÄGGNING
+    2 stycken lämnades orörda för att citattecknen inte går ihop.
+    Ett tecken saknas, eller ett står för mycket. Rätta i källan och kör igen.
+
+    02_urtid/010_en_svår_födelse.md, rad 85:
+        Yhla suckade, hennes andedräkt riste. ”Var gömde du honom?
+        Frågade hon hest.
+```
+
+Ett obalanserat stycke är nästan alltid ett skrivfel i manuset. Vilket
+tecken som fattas går inte att gissa, så verktyget gissar inte.
+
+`--rapport FIL` skriver samma lista som en markdown-checklista att lägga i
+manusets katalog och beta av:
+
+```markdown
+- [ ] `02_urtid/010_en_svår_födelse.md` rad 85
+
+  > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
+```
+
+> **Ordningen mot `manus lint`:** kör `pratminus` **först**. Lint delar en
+> replik som innehåller flera meningar över flera rader, och då sitter det
+> avslutande citattecknet inte längre på samma rad som det inledande —
+> ingenting konverteras. Åt andra hållet går det bra.
+
+Förvalet är två bindestreck, eftersom Pandoc gör om `--` till ett riktigt
+tankstreck vid rendering och `manus lint` känner igen formen. Vill du ha
+tecknet direkt i källfilen ger `--tankstreck` det i stället.
 
 ## Manifest — när numreringen inte passar
 
@@ -318,8 +429,9 @@ den och jobba vidare.
 ## Projektets katalogstruktur
 
 ```
-bin/manus              vägvisaren: manus lint / manus bygg
+bin/manus              vägvisaren: manus lint / pratminus / bygg
 lib/lint.sh            städningen
+lib/pratminus.sh       replikomvandlingen
 lib/bygg.sh            pandoc-körningen
 assets/                stilmallar och lua-filter
 ```
