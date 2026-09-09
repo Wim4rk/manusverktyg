@@ -31,7 +31,15 @@ visa_hjalp() {
 $PROGNAME — gör om citatrepliker till pratminus.
 
 ANVÄNDNING
-    $PROGNAME [FLAGGOR] FIL...
+    $PROGNAME [FLAGGOR] [FIL...]
+
+    Utan FIL letas filerna upp med SAMMA regler som 'manus bygg': bara
+    namn som börjar med tre siffror, och bara genom numrerade kataloger.
+    Anteckningar, research och makulatur hålls därmed utanför, precis som
+    de hålls utanför bygget.
+
+    Med FIL gäller precis de filerna, oavsett vad de heter — ett utpekat
+    namn är ett medvetet val och går alltid att köra.
 
     Som förval läses varje FIL.md och en omgjord kopia skrivs bredvid den
     som FIL.pratminus.md. Originalet ändras aldrig om du inte ger
@@ -145,9 +153,14 @@ ARBETSLISTA
     ren TAS $RAPPORTNAMN BORT — en lista som ligger kvar tom läses som att
     det finns något ogjort.
 
-    En lista skrivs eller tas bort BARA om körningen läste hela katalogen.
-    Kör du på en enstaka fil kan verktyget inte veta om grannfilerna har
-    problem, och rör då inte listan alls — den säger så i stället:
+    Bara kataloger som hör till BOKEN får en lista, alltså kataloger som
+    innehåller numrerade filer. Anteckningar, research och makulatur
+    samlar aldrig på sig $RAPPORTNAMN — problemen syns i terminalen ändå
+    när du kör på en sådan fil uttryckligen.
+
+    En lista skrivs eller tas bort BARA om körningen läste alla numrerade
+    filer i katalogen. Kör du på en enstaka fil kan verktyget inte veta om
+    grannfilerna har problem, och rör då inte listan alls:
 
         DELVIS GENOMSÖKTA
             02_urtid: 1 av 7 filer lästa — $RAPPORTNAMN rörs inte
@@ -247,7 +260,40 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-[ "${#filer[@]}" -eq 0 ] && fel_anvandning "inga filer angivna"
+# ---------------------------------------------------------------------
+# Vilka filer
+#
+# Utan FIL-argument letas de upp med SAMMA regler som manus bygg: bara
+# filer vars namn börjar med tre siffror, och bara genom numrerade
+# kataloger. Anteckningar, research och makulatur hålls därmed utanför,
+# precis som de hålls utanför bygget.
+#
+# Med FIL-argument gäller precis de filerna, oavsett vad de heter. Ett
+# utpekat namn är ett medvetet val och ska alltid gå att köra.
+# ---------------------------------------------------------------------
+utpekade=1
+if [ "${#filer[@]}" -eq 0 ]; then
+    utpekade=0
+    while IFS= read -r -d '' f; do
+        filer+=("$f")
+    done < <(
+        find . \
+            \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
+            \( -type f \
+               \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
+               ! -name '*.pandoc.md' ! -name '*.pratminus.md' \
+               -print0 \) \
+            2>/dev/null | LC_ALL=C sort -z
+    )
+
+    if [ "${#filer[@]}" -eq 0 ]; then
+        echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
+        echo "Ange en fil uttryckligen, eller kör '$PROGNAME --help'." >&2
+        exit 1
+    fi
+
+    echo "Hittade ${#filer[@]} dokument."
+fi
 
 if [ "$in_place" -eq 1 ] && [ -n "$ut_katalog" ]; then
     fel_anvandning "--in-place och --out-dir går inte att kombinera"
@@ -624,14 +670,22 @@ if [ "$ingen_rapport" -eq 0 ]; then
     while IFS= read -r katalog; do
         [ -n "$katalog" ] || continue
 
+        # Bara kataloger som hör till boken får en arbetslista. En katalog
+        # utan numrerade filer är anteckningar, research eller makulatur —
+        # den hålls utanför bygget och ska inte samla på sig rapporter
+        # heller. Problemen syns ändå i terminalen.
+        i_katalogen=$(find "$katalog" -maxdepth 1 -type f \
+                          \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
+                          ! -name '*.pandoc.md' ! -name '*.pratminus.md' \
+                          2>/dev/null | wc -l)
+
+        [ "$i_katalogen" -eq 0 ] && continue
+
         # Täckte körningen HELA katalogen? Annars vet vi inte om de filer
         # vi hoppade över har problem, och får varken skriva om listan
         # eller ta bort den. En körning på en enda fil ska inte kunna
         # radera minnet av ett problem i grannfilen.
-        i_katalogen=$(find "$katalog" -maxdepth 1 -type f -name '*.md' \
-                          ! -name "$RAPPORTNAMN" ! -name '*.pratminus.md' \
-                          2>/dev/null | wc -l)
-        lasta=$(grep -c "^$katalog/[^/]*\$" "$genomsokta_tmp" || true)
+        lasta=$(grep -c "^$katalog/[0-9][0-9][0-9][^/]*\$" "$genomsokta_tmp" || true)
 
         if [ "$lasta" -lt "$i_katalogen" ]; then
             [ "$ofullstandiga" -eq 0 ] && { echo; echo "DELVIS GENOMSÖKTA"; }

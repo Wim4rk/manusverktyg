@@ -136,9 +136,22 @@ manus skrivet med citattecken gör `manus pratminus` om dem:
 ”Heter du Elof?” frågade Eva.   →   -- Heter du Elof? frågade Eva.
 ```
 
+**Vilka filer.** Utan filargument gäller samma regler som för `manus bygg`:
+bara namn som börjar med tre siffror, och bara genom numrerade kataloger.
+Anteckningar, research och makulatur hålls utanför här också.
+
+```bash
+manus pratminus --lista              # hela boken, bygg-reglerna
+manus pratminus skisser/utkast.md    # en utpekad fil, oavsett namn
+```
+
+Pekar du ut en fil gäller precis den, oavsett vad den heter — ett utpekat
+namn är ett medvetet val.
+
 Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
-`--in-place`, och då sparas en `.bak`. `--lista` visar varje rad som skulle
-ändras, före och efter, utan att skriva något — kör alltid det först.
+`--in-place`, och då sparas en `.bak`. `--lista` visar varje stycke som
+skulle ändras, före och efter, utan att röra någon textfil — kör alltid det
+först.
 
 En rad görs om bara när alla tre stämmer: den **börjar** med ett
 citattecken, har ett avslutande på samma rad, och ser ut som en replik —
@@ -222,9 +235,14 @@ Rätta i källfilen och kör igen, så uppdateras listan. Blir en katalog ren
 **tas filen bort** — en lista som ligger kvar tom läses som att det finns
 något ogjort.
 
-En lista skrivs eller tas bort **bara om körningen läste hela katalogen**.
-Kör du på en enstaka fil kan verktyget inte veta om grannfilerna har
-problem, och rör då inte listan:
+Bara kataloger som hör till **boken** får en lista, alltså kataloger med
+numrerade filer. Anteckningar och makulatur samlar aldrig på sig
+`CITAT_PROBLEM.md` — problemen syns i terminalen ändå när du kör på en
+sådan fil uttryckligen.
+
+En lista skrivs eller tas bort **bara om körningen läste alla numrerade
+filer i katalogen**. Kör du på en enstaka fil kan verktyget inte veta om
+grannfilerna har problem, och rör då inte listan:
 
 ```
 DELVIS GENOMSÖKTA
