@@ -7,11 +7,11 @@ set -euo pipefail
 #   manus bygg    kör Pandoc på alla numrerade dokument i katalogträdet
 #
 # Det här är bara vägvisaren. Själva arbetet ligger i lib/, och de
-# gemensamma byggtillgångarna (stilmall, lua-filter) i tillgangar/.
+# gemensamma byggtillgångarna (stilmall, lua-filter) i assets/.
 
 # Följ symlänken hela vägen hem. Kommandot är tänkt att ligga som en länk i
 # ~/.local/bin, och då pekar $BASH_SOURCE på länken — inte på projektet där
-# lib/ och tillgangar/ faktiskt finns.
+# lib/ och assets/ faktiskt finns.
 SJALVA_FILEN="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
 MANUS_ROT="$(cd "$(dirname "$SJALVA_FILEN")/.." && pwd)"
 export MANUS_ROT
@@ -45,7 +45,7 @@ SNABBSTART
 
 VAR SAKER LIGGER
     Projektet:      $MANUS_ROT
-    Byggtillgångar: $MANUS_ROT/tillgangar
+    Byggtillgångar: $MANUS_ROT/assets
 EOF
 }
 

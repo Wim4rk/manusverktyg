@@ -41,7 +41,7 @@ check:
 	for f in bin/manus lib/lint.sh lib/bygg.sh; do \
 		[ -x "$$f" ] || { echo "  INTE KÖRBAR $$f"; fel=1; }; \
 	done; \
-	for t in tillgangar/custom-reference.docx tillgangar/swedish-quotes.lua; do \
+	for t in assets/custom-reference.docx assets/swedish-quotes.lua; do \
 		[ -f "$$t" ] && echo "  finns       $$t" || { echo "  SAKNAS      $$t"; fel=1; }; \
 	done; \
 	for p in pandoc awk find fc-list; do \

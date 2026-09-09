@@ -23,7 +23,9 @@ brödtexten, och den ändrar aldrig hur något renderas — en ensam radbrytning
 **Numreringen ska bära strukturen, inte en projektfil.**
 Kapitelordningen finns i filnamnen. Ingen databas, ingen manifestfil som
 kan komma ur synk med verkligheten. Byter du ordning byter du namn, och det
-syns i `git log`.
+syns i `git log`. För sammanställningar som numreringen inte passar för
+finns `--manifest`, men då varnar verktyget för varje fil som fallit ur
+listan — se [Manifest](#manifest--när-numreringen-inte-passar).
 
 **Anteckningar är inte kapitel.**
 Ett manus samlar på sig research, makulatur och skisser. Sådant får inte
@@ -74,7 +76,7 @@ men bara genom **numrerade** kataloger.
 | | Krav | Varför |
 | --- | --- | --- |
 | **Filer** | tre siffror först | kapitel kan vara  många och numreringen behöver luft: `010`, `020`, `021` |
-| **Kataloger** | en siffra räcker | delar är få: `01_början`, `02_urtid` |
+| **Kataloger** | en siffra räcker | delar är få: `01_del_ett`, `02_del_tva` |
 
 **En katalog som inte börjar med en siffra betyder att innehållet inte hör
 till bygget.** Anteckningar, makulatur och skisser hålls utanför även om
@@ -82,14 +84,14 @@ filerna i dem är numrerade — vilket de gärna är, eftersom man vill kunna
 bygga dem för sig.
 
 ```
-Roman/
-├── 01_början/
+MinBok/
+├── 01_del_ett/
 │   ├── 010_prolog.md          ✓
 │   └── 020_inledning.md       ✓
-├── 02_urtid/
-│   ├── 010_uppväxt.md         ✓
+├── 02_del_tva/
+│   ├── 010_kapitel.md         ✓
 │   ├── research/              ✗  hoppas över helt
-│   │   └── 010_familj.md      (även om filer är numrerad)
+│   │   └── 010_anteckning.md  (även om filen är numrerad)
 │   └── makulatur/             ✗
 └── skisser/                   ✗
 ```
@@ -98,7 +100,7 @@ Katalogen du **står i** räknas alltid, oavsett vad den heter. Egna
 anteckningar byggs alltså så här:
 
 ```bash
-cd Roman/02_urtid/research
+cd MinBok/02_del_tva/research
 manus bygg -o anteckningar.pdf
 ```
 
@@ -109,9 +111,9 @@ sitt eget innehåll och delarna kommer i nummerordning:
 
 ```
 001_forord.md
-01_början/010_prolog.md
-01_början/020_inledningar.md
-02_urtid/010_uppväxt.md
+01_del_ett/010_prolog.md
+01_del_ett/020_inledning.md
+02_del_tva/010_kapitel.md
 ...
 09_epilog/010_slutet.md
 ```
@@ -124,6 +126,70 @@ boken.
 `kapitel_001.md` och `01_utkast.md` tas inte med: siffrorna måste sitta
 först, och filer kräver tre. Dolda kataloger och `*.pandoc.md` hoppas över.
 
+## Manifest — när numreringen inte passar
+
+Numreringen är förvalet och räcker för en bok som läses rakt igenom. Men
+ibland ska något annat sammanställas: ett urval till en agent, ett utdrag
+till en tävling, en inlämningsversion. Då är filerna godtyckliga, saknar
+gemensam numrering och ska inte döpas om.
+
+`-m, --manifest FIL` bygger i stället det som räknas upp i FIL, i den
+ordning det står där:
+
+```bash
+manus bygg --manifest urval.yaml -o urval.docx
+```
+
+Manifestet är en **vanlig Pandoc-defaults-fil**:
+
+```yaml
+input-files:
+  - inledning.md
+  - "kapitel med mellanslag.md"
+
+metadata:
+  manus-uteslut:
+    - "anteckningar/*"
+    - makulatur.md
+```
+
+`input-files` ger ordningen — ingen sortering sker. Filnamn med mellanslag,
+`#` eller kolon måste citeras, annars läser YAML dem som något annat.
+
+Samma fil går att köra rakt igenom Pandoc utan verktyget:
+
+```bash
+pandoc --defaults=urval.yaml -o urval.docx
+```
+
+Då uteblir bara lint, typsnittskontrollen och den automatiska
+stilmallsupplockningen. Att `manus-uteslut` ligger under `metadata:` är
+avsiktligt: Pandoc vägrar okända nycklar på toppnivån men släpper igenom
+vad som helst där, så filen förblir giltig åt båda hållen.
+
+> **Sökvägarna räknas från katalogen du står i**, inte från manifestets egen
+> katalog. Det är Pandocs regel för `--defaults` och gäller därför här också.
+> Står du på fel ställe räknas de saknade filerna upp och bygget avbryts.
+
+### Varför uteslutningslistan finns
+
+Numreringen har **en** sanningskälla: trädet. Ett manifest har två, och då
+kan de glida isär. Ett kapitel du skrivit men glömt lägga till i listan
+byggs tyst bort — och det märks först när någon läser boken.
+
+Därför räknas varje byggbar fil i trädet som varken står i `input-files`
+eller matchar ett mönster i `manus-uteslut` upp som en varning:
+
+```
+VARNING: 1 fil(er) i trädet står varken i manifestet
+         eller under manus-uteslut:
+             glomd.md
+```
+
+Att tysta en fil kräver alltså att du skriver in den — att bestämma dig,
+inte att glömma. Det är det som ger manifestet numreringens garanti att
+ingenting försvinner tyst.
+
 ## Typsnitt som kanske inte finns
 
 xelatex **kraschar** om `mainfont` pekar på ett typsnitt som inte är
@@ -135,7 +201,7 @@ Ange därför reserver i metadatan:
 
 ```yaml
 ---
-title: Roman
+title: Nomen libri
 author: Scriptor Sum
 lang: sv
 
@@ -203,7 +269,7 @@ Fyra platser, i prioritetsordning — **första träffen vinner**:
 ./custom-reference.docx              ← bokens egen
 ./bygg/custom-reference.docx
 ./.pandoc/custom-reference.docx
-tillgangar/                          ← den allmänna, i det här repot
+assets/                              ← den allmänna, i det här repot
 ```
 
 Den allmänna ligger redan på plats, så utan att du gör något används den
@@ -255,7 +321,7 @@ den och jobba vidare.
 bin/manus              vägvisaren: manus lint / manus bygg
 lib/lint.sh            städningen
 lib/bygg.sh            pandoc-körningen
-tillgangar/            stilmallar och lua-filter
+assets/                stilmallar och lua-filter
 ```
 
 Fullständig hjälp finns i verktygen själva: `manus hjälp`,

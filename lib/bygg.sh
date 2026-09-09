@@ -32,7 +32,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_FIL")" && pwd)"
 # Projektets rot, satt av "manus". Körs bygg.sh direkt ligger roten en
 # nivå upp från lib/.
 readonly ROT="${MANUS_ROT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-readonly TILLGANGAR="$ROT/tillgangar"
+readonly TILLGANGAR="$ROT/assets"
 
 visa_hjalp() {
     cat <<EOF
@@ -49,6 +49,10 @@ FLAGGOR
     -o, --ut MÅL     Utfil (förval: bok.epub). Formatet följer av ändelsen.
                      Tillsammans med --separat är MÅL en KATALOG i stället
                      (förval: ut).
+    -m, --manifest FIL
+                     Bygger filerna som räknas upp i FIL, i den ordning de
+                     står där, i stället för att leta efter numrerade namn.
+                     Se MANIFEST nedan.
     -s, --separat    Renderar varje dokument för sig i stället för att slå
                      ihop dem till ett.
     -l, --lint       Kör manus lint på filerna först, till en tillfällig
@@ -85,7 +89,7 @@ BYGGTILLGÅNGAR
         ./custom-reference.docx
         ./bygg/custom-reference.docx
         ./.pandoc/custom-reference.docx
-        manusverktygets tillgangar/   <- den allmänna
+        manusverktygets assets/       <- den allmänna
 
     Båda stilmallarna skickas med oavsett utformat. Pandoc struntar tyst i
     dem för de format de inte gäller, så samma kommando fungerar överallt.
@@ -94,21 +98,64 @@ BYGGTILLGÅNGAR
     html { background-color: #fdfdfd } — inte riktigt vitt, vilket läses
     som en grå ton. Vår CSS läggs efter och vinner.
 
+MANIFEST
+    Numreringen är förvalet och räcker för en bok som läses rakt igenom.
+    Ett manifest är till för de andra jobben: ett urval till en agent, ett
+    utdrag till en tävling, en inlämningsversion — sammanställningar där
+    filerna inte har någon gemensam numrering och inte ska döpas om.
+
+    Manifestet är en vanlig Pandoc-defaults-fil:
+
+        input-files:
+          - inledning.md
+          - "kapitel med mellanslag.md"
+          - "#udda namn.md"
+        reference-doc: /sokvag/till/custom-reference.docx
+        metadata:
+          manus-uteslut:
+            - "anteckningar/*"
+            - makulatur.md
+
+    input-files ger ordningen. Ingen sortering sker — listan gäller precis
+    som den står. Filnamn med mellanslag, brädgård eller kolon måste
+    citeras, annars läser YAML dem som något annat.
+
+    Samma fil går att köra rakt igenom Pandoc, utan det här skriptet:
+
+        pandoc --defaults=urval.yaml -o ut.docx
+
+    Då uteblir bara lint, typsnittskontrollen och den automatiska
+    stilmallsupplockningen. manus-uteslut ligger under metadata: just för
+    att Pandoc vägrar okända nycklar på toppnivån men släpper igenom vad
+    som helst där — så filen förblir giltig åt båda hållen.
+
+    SÖKVÄGARNA RÄKNAS FRÅN KATALOGEN DU STÅR I, inte från manifestets egen
+    katalog. Det är Pandocs regel för --defaults och gäller därför här
+    också. Står du på fel ställe räknas de saknade filerna upp och bygget
+    avbryts.
+
+    manus-uteslut är skriptets eget tillägg och säger vilka filer i trädet
+    som medvetet inte hör till bygget. Posterna får vara glob-mönster.
+    Varje byggbar fil som varken står i input-files eller matchar ett
+    uteslutningsmönster räknas upp som en varning — det är det som hindrar
+    ett glömt kapitel från att tyst byggas bort. Numreringen kan inte glida
+    isär från verkligheten; en lista kan.
+
 VILKA FILER TAS MED
     Sökningen går REKURSIVT genom hela trädet under katalogen du står i,
     men bara genom numrerade kataloger.
 
     FILER behöver TRE siffror först i namnet, och ändelsen .md eller .txt:
         010_prolog.md               tas med
-        021_nya_lardomar.md         tas med
+        021_kapitel.md              tas med
         0001_prolog.md              tas med (börjar med tre siffror)
         kapitel_001.md              tas INTE med (siffrorna sitter inte först)
         01_utkast.md                tas INTE med (bara två siffror)
 
     KATALOGER behöver bara EN siffra först. Kapitel är många och behöver
     luft i numreringen; delar är få.
-        01_borjan/                  gås igenom
-        02_urtid/                   gås igenom
+        01_del_ett/                 gås igenom
+        02_del_tva/                 gås igenom
         research/                   hoppas över HELT
         skisser/                    hoppas över HELT
 
@@ -125,9 +172,9 @@ ORDNING
     före sitt eget innehåll, och delarna kommer i nummerordning:
 
         001_forord.md
-        01_borjan/010_prolog.md
-        01_borjan/020_staden.md
-        02_urtid/010_uppvaxt.md
+        01_del_ett/010_prolog.md
+        01_del_ett/020_kapitel.md
+        02_del_tva/010_kapitel.md
         09_epilog/010_slutet.md
 
     Numren måste vara lika många siffror inom varje nivå. 2_ sorterar
@@ -148,6 +195,9 @@ EXEMPEL
 
     Rendera varje kapitel för sig till katalogen 'korrektur':
         $PROGNAME --separat -o korrektur
+
+    Bygg ett urval ur ett manifest, med stilmallen som vanligt:
+        $PROGNAME --manifest urval.yaml -o urval.docx
 EOF
 }
 
@@ -233,6 +283,61 @@ las_typsnitt() {
     ' "$1"
 }
 
+# ---------------------------------------------------------------------
+# Manifest
+#
+# Ett manifest är en vanlig Pandoc-defaults-fil. Ordningen kommer ur
+# input-files-listan i stället för ur filnamnen, så filerna kan heta vad
+# som helst. Samma fil går att köra rakt igenom Pandoc:
+#
+#     pandoc --defaults=urval.yaml -o ut.docx
+#
+# Pandoc vägrar okända nycklar på toppnivå, men släpper igenom vad som
+# helst under metadata:. Uteslutningslistan bor därför där, och filen
+# förblir giltig för Pandoc själv.
+# ---------------------------------------------------------------------
+
+# Plockar ut en lista ur manifestet. Nyckeln kan ligga på vilken nivå som
+# helst, så samma funktion klarar både input-files på toppnivån och
+# manus-uteslut nästlad under metadata:.
+las_manifest_lista() {
+    awk -v nyckel="$2" '
+        function skala(v,   forsta, slut) {
+            sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
+
+            # Citerade värden tas ordagrant. Filnamn får innehålla både #
+            # och kolon, och då är citaten det enda som räddar dem.
+            # Klipps vid det AVSLUTANDE citattecknet, inte vid radslutet —
+            # efter det kan det stå en kommentar.
+            forsta = substr(v, 1, 1)
+            if (forsta == "\"" || forsta == "\047") {
+                v = substr(v, 2)
+                slut = index(v, forsta)
+                if (slut > 0) v = substr(v, 1, slut - 1)
+                return v
+            }
+
+            # Ociterat: en kommentar börjar först vid blanktecken-brädgård.
+            sub(/[ \t]+#.*$/, "", v)
+            sub(/[ \t]+$/, "", v)
+            return v
+        }
+
+        $0 ~ "^[ \t]*" nyckel "[ \t]*:[ \t]*(#.*)?$" { i_lista = 1; next }
+
+        # Nästa nyckel avslutar listan. Listrader börjar med bindestreck
+        # och fastnar därför inte här.
+        i_lista && /^[ \t]*[^ \t#-][^:]*:/ { i_lista = 0 }
+
+        i_lista && /^[ \t]*-[ \t]+/ {
+            v = $0
+            sub(/^[ \t]*-[ \t]+/, "", v)
+            v = skala(v)
+            if (v != "") print v
+        }
+    ' "$1"
+}
+
 # Letar upp en byggtillgång (stilmall, lua-filter) i tur och ordning:
 # bokens egen katalog först, skriptets katalog sist. Så kan en enskild bok
 # ha sin egen stilmall utan att den allmänna behöver ändras.
@@ -252,6 +357,7 @@ lint=0
 bara_lista=0
 utan_mall=0
 mal=""
+manifest=""
 referens=""
 css_fil=""
 lua_filter=()
@@ -265,6 +371,12 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --ut=*)         mal="${1#*=}" ;;
+        -m|--manifest)
+            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
+            manifest="$2"
+            shift
+            ;;
+        --manifest=*)   manifest="${1#*=}" ;;
         -r|--referens)
             [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
             referens="$2"
@@ -318,22 +430,63 @@ fi
 # mellanslag och andra tecken i namnen.
 # ---------------------------------------------------------------------
 filer=()
-while IFS= read -r -d '' f; do
-    filer+=("$f")
-done < <(
-    find . \
-        \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
-        \( -type f \
-           \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
-           ! -name '*.pandoc.md' \
-           -print0 \) \
-        2>/dev/null | LC_ALL=C sort -z
-)
+uteslut=()
 
-if [ "${#filer[@]}" -eq 0 ]; then
-    echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
-    echo "Kör '$PROGNAME --help' för vilka namn som räknas." >&2
-    exit 1
+if [ -n "$manifest" ]; then
+    # Manifestläge: ordningen står i filen, inte i filnamnen. Ingen
+    # sortering — listan gäller som den är skriven.
+    [ -f "$manifest" ] || fel_anvandning "hittar inte manifestet '$manifest'"
+
+    while IFS= read -r rad; do
+        [ -n "$rad" ] && filer+=("$rad")
+    done < <(las_manifest_lista "$manifest" input-files)
+
+    while IFS= read -r rad; do
+        [ -n "$rad" ] && uteslut+=("$rad")
+    done < <(las_manifest_lista "$manifest" manus-uteslut)
+
+    if [ "${#filer[@]}" -eq 0 ]; then
+        echo "$PROGNAME: '$manifest' innehåller ingen input-files-lista." >&2
+        echo "Kör '$PROGNAME --help' för hur ett manifest ser ut." >&2
+        exit 1
+    fi
+
+    # En fil som står i listan men inte finns är alltid ett fel. Pandoc
+    # säger 'withBinaryFile: does not exist' och nämner inte varför; här
+    # räknas alla upp på en gång, med den vanliga orsaken utskriven.
+    saknade_filer=()
+    for f in "${filer[@]}"; do
+        [ -f "$f" ] || saknade_filer+=("$f")
+    done
+    if [ "${#saknade_filer[@]}" -gt 0 ]; then
+        echo "$PROGNAME: manifestet pekar på filer som inte finns:" >&2
+        for f in "${saknade_filer[@]}"; do
+            echo "    $f" >&2
+        done
+        echo >&2
+        echo "Sökvägarna räknas från katalogen du STÅR I, inte från manifestets" >&2
+        echo "egen katalog. Det är Pandocs regel för --defaults, och den gäller" >&2
+        echo "här också. Du står i: $PWD" >&2
+        exit 1
+    fi
+else
+    while IFS= read -r -d '' f; do
+        filer+=("$f")
+    done < <(
+        find . \
+            \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
+            \( -type f \
+               \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
+               ! -name '*.pandoc.md' \
+               -print0 \) \
+            2>/dev/null | LC_ALL=C sort -z
+    )
+
+    if [ "${#filer[@]}" -eq 0 ]; then
+        echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
+        echo "Kör '$PROGNAME --help' för vilka namn som räknas." >&2
+        exit 1
+    fi
 fi
 
 # Sökvägen relativt katalogen vi står i. Behövs även efter en lint, då
@@ -349,6 +502,53 @@ for rel in "${rel_sokvagar[@]}"; do
     printf "  %3d. %s\n" "$i" "$rel"
     i=$((i + 1))
 done
+
+# ---------------------------------------------------------------------
+# Manifestets svaga punkt: filer som glider ur listan
+#
+# Numreringen har en sanningskälla — trädet. Ett manifest har två, och då
+# kan de glida isär. Ett kapitel du skrivit men glömt lägga till byggs
+# tyst bort, och det syns inte förrän någon läser boken.
+#
+# Därför räknas varje byggbar fil i trädet som varken står i listan eller
+# är uttryckligen utesluten upp här. Att tysta en fil görs genom att
+# skriva in den under manus-uteslut, alltså genom att bestämma sig.
+# ---------------------------------------------------------------------
+if [ -n "$manifest" ]; then
+    olistade=()
+    while IFS= read -r -d '' f; do
+        rel="${f#./}"
+
+        for listad in "${rel_sokvagar[@]}"; do
+            [ "$listad" = "$rel" ] && continue 2
+        done
+
+        for monster in ${uteslut+"${uteslut[@]}"}; do
+            # Omönstrat med flit: uteslutningarna får vara glob.
+            case "$rel" in $monster) continue 2 ;; esac
+        done
+
+        olistade+=("$rel")
+    done < <(
+        find . \
+            \( -type d -name '.*' ! -name '.' -prune \) -o \
+            \( -type f \( -name '*.md' -o -name '*.txt' \) \
+               ! -name '*.pandoc.md' ! -name '.*' \
+               -print0 \) \
+            2>/dev/null | LC_ALL=C sort -z
+    )
+
+    if [ "${#olistade[@]}" -gt 0 ]; then
+        echo
+        echo "VARNING: ${#olistade[@]} fil(er) i trädet står varken i manifestet"
+        echo "         eller under manus-uteslut:"
+        for rel in "${olistade[@]}"; do
+            echo "             $rel"
+        done
+        echo "         De byggs INTE. Lägg dem i input-files om de ska med,"
+        echo "         eller under manus-uteslut för att slippa varningen."
+    fi
+fi
 
 if [ "$bara_lista" -eq 1 ]; then
     exit 0

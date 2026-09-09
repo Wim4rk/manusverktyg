@@ -93,7 +93,7 @@ manus bygg --lint -o MinBok.pdf -- \
   -V fontsize=12pt \
   -V geometry:margin=1in \
   --metadata title="Nomen libri" \
-  --metadata author="Actor Sum"
+  --metadata author="Scriptor Sum"
 ```
 
 Testat och verifierat i sin helhet. Några ord om varje del:
@@ -123,7 +123,7 @@ automatiskt — se avsnitt 3.1. För PDF spelar bara filtret roll.
 ### EPUB — för alfa-/betaläsare. Eller självpublicering...
 
 ```bash
-manus bygg --lint -o MinBok.epub -- --toc --metadata title="Min bok"
+manus bygg --lint -o MinBok.epub -- --toc --metadata title="Nomen libri"
 ```
 
 EPUB behöver ingen PDF-motor och inget typsnitt; läsarens app bestämmer
@@ -167,7 +167,7 @@ utan att den allmänna behöver röras:
 ./custom-reference.docx
 ./bygg/custom-reference.docx
 ./.pandoc/custom-reference.docx
-manusverktyg/tillgangar/   ← den allmänna
+manusverktyg/assets/       ← den allmänna
 ```
 
 Stilmallen skickas med oavsett utformat — Pandoc struntar tyst i den för
@@ -197,7 +197,7 @@ pandoc MinBok/**/*.md \
   --metadata-file=MinBok/metadata.yaml \
   --toc --pdf-engine=xelatex \
   -V lang=sv -V mainfont="Liberation Serif" \
-  --lua-filter=~/Dropbox/Github/manusverktyg/tillgangar/swedish-quotes.lua \
+  --lua-filter ~/Dropbox/Github/manusverktyg/assets/swedish-quotes.lua \
   -o MinBok.pdf
 ```
 
@@ -270,13 +270,18 @@ En kommentar får gå över flera rader — `manus lint` lämnar allt mellan
 
 Pandocs smart-typografi ger engelska citattecken (`“hej”` — olika tecken
 för öppning/stängning). Svensk typografi använder samma tecken på båda
-sidor (`”hej”`). Löst med ett Lua-filter, `~/Dropbox/Github/manusverktyg/tillgangar/swedish-quotes.lua`,
+sidor (`”hej”`). Löst med ett Lua-filter, `~/Dropbox/Github/manusverktyg/assets/swedish-quotes.lua`,
 som fångar citattecken i Pandocs interna representation innan något
 utformat väljs — funkar därför likadant för EPUB/DOCX/PDF, testat mot
 alla tre. Lägg till på vilket kommando som helst:
 ```bash
-pandoc ... --lua-filter=~/Dropbox/Github/manusverktyg/tillgangar/swedish-quotes.lua -o MinBok.epub
+pandoc ... --lua-filter ~/Dropbox/Github/manusverktyg/assets/swedish-quotes.lua -o MinBok.epub
 ```
+
+Skriv sökvägen med **mellanslag** efter flaggan, inte `--lua-filter=~/...`.
+Bash expanderar inte `~` efter ett likhetstecken i ett vanligt kommandoord, så
+Pandoc får en bokstavlig tilde och avbryter med *cannot open*. Formen
+`--lua-filter=$HOME/...` fungerar också, eftersom `$HOME` expanderar överallt.
 
 ## 9. Pandocs Markdown — vad som skiljer sig från "vanlig" markdown
 
@@ -286,7 +291,7 @@ Det som faktiskt spelar roll för skönlitterär text:
 * **Smart typografi (på som standard):** `--` blir en tankstreck (–), `---`
   blir em-streck (—), `...` blir ellips (…), raka citattecken blir kurviga
   — men **engelska** kurviga citattecken (`“hej”`), inte svenska (`”hej”`).
-  `lang: sv` ändrar inte detta. Här är det öst med `tillgangar/swedish-quotes.lua`,
+  `lang: sv` ändrar inte detta. Här är det löst med `assets/swedish-quotes.lua`,
   som `manus bygg` skickar med automatiskt.
   Skriv `--`, `---` och `...` rakt av och lita på att Pandoc gör om dem vid
   rendering. Vill du stänga av HELA smart-typografin: `-f markdown-smart`
