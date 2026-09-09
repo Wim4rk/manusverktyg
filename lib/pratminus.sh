@@ -55,11 +55,13 @@ FLAGGOR
     -t, --tankstreck Skriver ett riktigt tankstreck (–) i stället för två
                      bindestreck. Se nedan om vilket du vill ha.
     -n, --lista      Visar varje stycke som skulle ändras, före och efter,
-                     och skriver ingen fil. Kör alltid detta först.
+                     utan att röra någon textfil. Kör alltid detta först.
+                     Arbetslistorna uppdateras ändå, se ARBETSLISTA.
     -R, --rapport FIL
-                     Skriver arbetslistan över obalanserade stycken till
-                     FIL som en markdown-checklista att beta av. Listan
-                     skrivs ut i terminalen ändå, med eller utan flaggan.
+                     Skriver dessutom en samlad lista över hela körningen
+                     till FIL, utöver listorna ute i katalogerna.
+    --ingen-rapport  Rör inga arbetslistor alls. Varken skriver eller tar
+                     bort $RAPPORTNAMN.
     -h, --help       Visar den här hjälpen och avslutar.
 
 VILKA RADER RÄKNAS
@@ -124,23 +126,44 @@ STYCKET ÄR ENHETEN, INTE RADEN
     Utan taket vid tomraden skulle det citatet svälja text ända fram till
     nästa citattecken, kanske flera stycken bort.
 
-HANDPÅLÄGGNING
-    Varje körning avslutas med en lista över de stycken som lämnades
-    orörda, med fil, radnummer och texten. Det gäller även en skarp
-    konvertering — den som just gjort om hela boken måste få veta vad som
-    INTE blev gjort.
+ARBETSLISTA
+    Varje körning skriver en att-göra-lista, $RAPPORTNAMN, i VARJE katalog
+    som innehåller en fil med obalanserade citat. Listan hamnar alltså där
+    arbetet ska göras, inte samlad på ett ställe:
+
+        # Citatproblem
+
+        - [ ] **010_en_svår_födelse.md** rad 85
+
+          > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
+
+        ---
+
+        1 kvar. Senast genomsökt 2026-09-10.
+
+    Rätta i källfilen och kör igen, så uppdateras listan. Blir en katalog
+    ren TAS $RAPPORTNAMN BORT — en lista som ligger kvar tom läses som att
+    det finns något ogjort.
+
+    En lista skrivs eller tas bort BARA om körningen läste hela katalogen.
+    Kör du på en enstaka fil kan verktyget inte veta om grannfilerna har
+    problem, och rör då inte listan alls — den säger så i stället:
+
+        DELVIS GENOMSÖKTA
+            02_urtid: 1 av 7 filer lästa — $RAPPORTNAMN rörs inte
+
+    Annars skulle en körning på en ren fil kunna radera minnet av ett
+    problem i filen bredvid.
+
+    Filen är GENERERAD och skrivs över varje gång. Egna anteckningar i den
+    överlever inte. Den läses aldrig in som källtext, så '$PROGNAME *.md'
+    tar inte med sin egen rapport.
 
     Ett obalanserat stycke är nästan alltid ett skrivfel i manuset. Vilket
     tecken som fattas går inte att gissa, så verktyget gissar inte.
 
-    --rapport FIL skriver samma lista som en markdown-checklista:
-
-        - [ ] \`02_urtid/010_en_svår_födelse.md\` rad 85
-
-          > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
-
-    Den kan läggas i manusets katalog och betas av som vilken att-göra-lista
-    som helst.
+    Vill du ha alltihop samlat på ett ställe också: --rapport FIL.
+    Vill du inte ha några listor alls: --ingen-rapport.
 
 VAD SOM LÄMNAS I FRED
     YAML-frontmatter högst upp i filen, kodblock (\`\`\` eller ~~~) och
@@ -186,9 +209,15 @@ fel_anvandning() {
     exit 1
 }
 
+# Namnet på arbetslistan som läggs i varje katalog med problem. Filen är
+# genererad och skrivs över vid varje körning, så den läses aldrig in som
+# källtext ens när man globbar *.md.
+readonly RAPPORTNAMN="CITAT_PROBLEM.md"
+
 in_place=0
 bara_lista=0
 tankstreck=0
+ingen_rapport=0
 ut_katalog=""
 rapport_fil=""
 filer=()
@@ -211,6 +240,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --rapport=*)    rapport_fil="${1#*=}" ;;
+        --ingen-rapport) ingen_rapport=1 ;;
         -*)             fel_anvandning "okänd flagga '$1'" ;;
         *)              filer+=("$1") ;;
     esac
@@ -234,7 +264,14 @@ streck="--"
 # FIL <tab> RAD <tab> texten. Rapporten skrivs ut när alla filer är klara,
 # så arbetslistan står samlad i stället för utspridd mellan filnamnen.
 rapport_tmp=$(mktemp)
-rensa_rapport() { rm -f "$rapport_tmp"; }
+
+# Vilka kataloger som faktiskt genomsökts. En katalog vars problem är
+# åtgärdade ska få veta det, men bara om den verkligen lästes den här
+# gången — annars skulle en körning på en enda fil tömma listan för hela
+# katalogen.
+genomsokta_tmp=$(mktemp)
+
+rensa_rapport() { rm -f "$rapport_tmp" "$genomsokta_tmp"; }
 trap rensa_rapport EXIT
 
 # ---------------------------------------------------------------------
@@ -508,6 +545,14 @@ for f in "${filer[@]}"; do
         echo "$PROGNAME: hoppar över (inte en fil): $f" >&2
         continue
     fi
+
+    # Den egna arbetslistan är genererad text, inte manus. Utan det här
+    # skulle 'pratminus *.md' läsa in sin egen rapport.
+    if [ "$(basename "$f")" = "$RAPPORTNAMN" ]; then
+        continue
+    fi
+
+    printf '%s\n' "$f" >> "$genomsokta_tmp"
     behandla_en_fil "$f"
 done
 
@@ -518,46 +563,113 @@ done
 # citattecken saknas, eller ett står för mycket. Verktyget kan inte gissa
 # vilket, och gissar därför inte alls. Men den som just konverterat hela
 # boken måste få veta vad som INTE blev gjort, och var.
+#
+# Listan hamnar som CITAT_PROBLEM.md i SAMMA katalog som filen den gäller,
+# så den ligger där arbetet ska göras. Den skrivs om vid varje körning och
+# är genererad text — egna anteckningar i den överlever inte.
 # ---------------------------------------------------------------------
-if [ -s "$rapport_tmp" ]; then
-    antal_kvar=$(wc -l < "$rapport_tmp")
-    if [ "$antal_kvar" -eq 1 ]; then
-        ord_stycke="stycke lämnades"
-        ord_rapport="stycke som \`$PROGNAME\` lämnade orört."
+
+# Ett stycke utan tomrader omkring sig kan vara ett helt kapitel. Det som
+# är användbart i listan är fil och radnummer; texten är där för att känna
+# igen stället, inte för att läsas i sin helhet.
+korta() {
+    if [ "${#1}" -gt 240 ]; then
+        printf '%s…' "${1:0:240}"
     else
-        ord_stycke="stycken lämnades"
-        ord_rapport="stycken som \`$PROGNAME\` lämnade orörda."
+        printf '%s' "$1"
     fi
+}
 
-    echo
-    echo "HANDPÅLÄGGNING"
-    echo "    $antal_kvar $ord_stycke orörda för att citattecknen inte går ihop."
-    echo "    Ett tecken saknas, eller ett står för mycket. Rätta i källan och kör igen."
-    echo
+# Skriver en att-göra-lista för en katalog. Argument: katalogen, och
+# därefter posterna som FIL<tab>RAD<tab>TEXT på stdin.
+skriv_lista() {
+    local katalog="$1" mal="$1/$RAPPORTNAMN"
+    local r_fil r_rad r_text antal
 
-    # Ett stycke utan tomrader omkring sig kan vara ett helt kapitel. Det
-    # som är användbart i listan är fil och radnummer; texten är där för
-    # att känna igen stället, inte för att läsas i sin helhet.
-    korta() {
-        if [ "${#1}" -gt 240 ]; then
-            printf '%s…' "${1:0:240}"
-        else
-            printf '%s' "$1"
-        fi
-    }
+    antal=$(wc -l < "$rapport_tmp.kat")
 
-    while IFS=$'\t' read -r r_fil r_rad r_text; do
-        echo "    $r_fil, rad $r_rad:"
-        korta "$r_text" | fold -s -w 68 | sed 's/^/        /'
+    {
+        echo "# Citatproblem"
         echo
-    done < "$rapport_tmp"
-
-    if [ -n "$rapport_fil" ]; then
-        {
-            echo "# Handpåläggning — obalanserade citat"
+        echo "<!-- Skapad av \`$PROGNAME\`. Skrivs över vid varje körning."
+        echo "     Egna anteckningar här överlever inte nästa körning. -->"
+        echo
+        echo "Stycken där citattecknen inte går ihop: ett saknas, eller ett står"
+        echo "för mycket. De har lämnats **orörda** — vilket tecken som fattas går"
+        echo "inte att gissa."
+        echo
+        echo "Rätta i källfilen och kör \`$PROGNAME\` igen, så uppdateras listan."
+        echo
+        while IFS=$'\t' read -r r_fil r_rad r_text; do
+            echo "- [ ] **$(basename "$r_fil")** rad $r_rad"
             echo
-            echo "$antal_kvar $ord_rapport"
-            echo "Citattecknen går inte ihop: ett saknas, eller ett står för mycket."
+            echo "  > $(korta "$r_text")"
+            echo
+        done < "$rapport_tmp.kat"
+        echo "---"
+        echo
+        echo "$antal kvar. Senast genomsökt $(date +%F)."
+    } > "$mal"
+
+    echo "    $mal ($antal kvar)"
+}
+
+if [ "$ingen_rapport" -eq 0 ]; then
+    # Kataloger som lästes den här körningen, unika.
+    sed 's|/[^/]*$||; s|^$|.|' "$genomsokta_tmp" | sort -u > "$genomsokta_tmp.unik"
+
+    skrivna=0
+    rensade=0
+    ofullstandiga=0
+    while IFS= read -r katalog; do
+        [ -n "$katalog" ] || continue
+
+        # Täckte körningen HELA katalogen? Annars vet vi inte om de filer
+        # vi hoppade över har problem, och får varken skriva om listan
+        # eller ta bort den. En körning på en enda fil ska inte kunna
+        # radera minnet av ett problem i grannfilen.
+        i_katalogen=$(find "$katalog" -maxdepth 1 -type f -name '*.md' \
+                          ! -name "$RAPPORTNAMN" ! -name '*.pratminus.md' \
+                          2>/dev/null | wc -l)
+        lasta=$(grep -c "^$katalog/[^/]*\$" "$genomsokta_tmp" || true)
+
+        if [ "$lasta" -lt "$i_katalogen" ]; then
+            [ "$ofullstandiga" -eq 0 ] && { echo; echo "DELVIS GENOMSÖKTA"; }
+            echo "    $katalog: $lasta av $i_katalogen filer lästa — $RAPPORTNAMN rörs inte"
+            ofullstandiga=$((ofullstandiga + 1))
+            continue
+        fi
+
+        # Posterna som hör till just den här katalogen.
+        awk -F'\t' -v k="$katalog" '
+            { d = $1; sub(/\/[^\/]*$/, "", d); if (d == "") d = "."; if (d == k) print }
+        ' "$rapport_tmp" > "$rapport_tmp.kat"
+
+        if [ -s "$rapport_tmp.kat" ]; then
+            [ "$skrivna" -eq 0 ] && { echo; echo "ARBETSLISTOR"; }
+            skriv_lista "$katalog"
+            skrivna=$((skrivna + 1))
+        elif [ -f "$katalog/$RAPPORTNAMN" ]; then
+            # Katalogen genomsöktes och är ren nu. Listan tas bort hellre
+            # än lämnas kvar tom — en fil som ligger kvar läses som att
+            # det finns något ogjort.
+            rm -f "$katalog/$RAPPORTNAMN"
+            [ "$rensade" -eq 0 ] && { echo; echo "ÅTGÄRDADE"; }
+            echo "    $katalog/$RAPPORTNAMN borttagen — inga problem kvar"
+            rensade=$((rensade + 1))
+        fi
+    done < "$genomsokta_tmp.unik"
+    rm -f "$rapport_tmp.kat" "$genomsokta_tmp.unik"
+fi
+
+# En samlad rapport på valfri plats, utöver listorna i katalogerna.
+if [ -n "$rapport_fil" ]; then
+    if [ -s "$rapport_tmp" ]; then
+        antal_kvar=$(wc -l < "$rapport_tmp")
+        {
+            echo "# Citatproblem — hela körningen"
+            echo
+            echo "$antal_kvar stycken där citattecknen inte går ihop."
             echo
             while IFS=$'\t' read -r r_fil r_rad r_text; do
                 echo "- [ ] \`$r_fil\` rad $r_rad"
@@ -566,15 +678,13 @@ if [ -s "$rapport_tmp" ]; then
                 echo
             done < "$rapport_tmp"
         } > "$rapport_fil"
-        echo "    Arbetslistan skriven till: $rapport_fil"
-        echo
+    else
+        {
+            echo "# Citatproblem — hela körningen"
+            echo
+            echo "Inga. Alla citattecken går ihop."
+        } > "$rapport_fil"
     fi
-elif [ -n "$rapport_fil" ]; then
-    {
-        echo "# Handpåläggning — obalanserade citat"
-        echo
-        echo "Inga. Alla citattecken går ihop."
-    } > "$rapport_fil"
     echo
-    echo "Inga obalanserade stycken. Tom arbetslista skriven till: $rapport_fil"
+    echo "Samlad rapport: $rapport_fil"
 fi

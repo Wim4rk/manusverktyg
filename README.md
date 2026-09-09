@@ -200,33 +200,46 @@ Yhla suckade. ”Var gömde du honom? frågade hon.
 Utan taket vid tomraden skulle det citatet svälja text ända fram till nästa
 citattecken, kanske flera stycken bort.
 
-### Handpåläggning
+### Arbetslistan
 
-Varje körning avslutas med en lista över de stycken som lämnades orörda,
-med fil, radnummer och texten — även en skarp konvertering. Den som just
-gjort om hela boken måste få veta vad som **inte** blev gjort:
-
-```
-HANDPÅLÄGGNING
-    2 stycken lämnades orörda för att citattecknen inte går ihop.
-    Ett tecken saknas, eller ett står för mycket. Rätta i källan och kör igen.
-
-    02_urtid/010_en_svår_födelse.md, rad 85:
-        Yhla suckade, hennes andedräkt riste. ”Var gömde du honom?
-        Frågade hon hest.
-```
-
-Ett obalanserat stycke är nästan alltid ett skrivfel i manuset. Vilket
-tecken som fattas går inte att gissa, så verktyget gissar inte.
-
-`--rapport FIL` skriver samma lista som en markdown-checklista att lägga i
-manusets katalog och beta av:
+Varje körning skriver en att-göra-lista, `CITAT_PROBLEM.md`, i **varje
+katalog** som innehåller en fil med obalanserade citat. Listan hamnar alltså
+där arbetet ska göras, inte samlad på ett ställe:
 
 ```markdown
-- [ ] `02_urtid/010_en_svår_födelse.md` rad 85
+# Citatproblem
+
+- [ ] **010_en_svår_födelse.md** rad 85
 
   > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
+
+---
+
+1 kvar. Senast genomsökt 2026-09-10.
 ```
+
+Rätta i källfilen och kör igen, så uppdateras listan. Blir en katalog ren
+**tas filen bort** — en lista som ligger kvar tom läses som att det finns
+något ogjort.
+
+En lista skrivs eller tas bort **bara om körningen läste hela katalogen**.
+Kör du på en enstaka fil kan verktyget inte veta om grannfilerna har
+problem, och rör då inte listan:
+
+```
+DELVIS GENOMSÖKTA
+    02_urtid: 1 av 7 filer lästa — CITAT_PROBLEM.md rörs inte
+```
+
+Annars skulle en körning på en ren fil kunna radera minnet av ett problem i
+filen bredvid.
+
+Filen är genererad och skrivs över varje gång — egna anteckningar i den
+överlever inte. Den läses aldrig in som källtext, så `manus pratminus *.md`
+tar inte med sin egen rapport.
+
+`--rapport FIL` ger dessutom en samlad lista över hela körningen.
+`--ingen-rapport` rör inga listor alls.
 
 > **Ordningen mot `manus lint`:** kör `pratminus` **först**. Lint delar en
 > replik som innehåller flera meningar över flera rader, och då sitter det
