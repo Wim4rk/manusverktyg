@@ -1,29 +1,28 @@
 # Kvickguide
 
-**För skönlitteratur.** De fem saker man faktiskt gör med ett romanmanus.
-Ingen kodning krävs — du skriver ett kommando och trycker retur.
-
-## Innan du börjar
-
-Öppna terminalen och gå till bokens mapp. Det gör du med `cd`, som betyder
-"gå till":
-
-```bash
-cd ~/Dropbox/MinBok
-```
-
-Alla kommandon nedan utgår från att du **står i** den mappen. Det är hela
-knepet: verktyget arbetar med mappen du står i just nu.
+Öppna terminalen och gå till bokens mapp.  Verktyget arbetar
+med mappen du står i just nu.
 
 Vill du veta var du står: skriv `pwd` och tryck retur.
 
+## Snabbstart
+
+Om du vill skapa en PDF: ställ dig i bokens katalog:
+
+```bash
+manus bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
+```
+
+Om du vill skapa en annan sorts fil byter du bara filändelse
+på dokumentet du skapar.
+
 **Formatet bestäms av filändelsen** på det du ber om:
 
-| Skriver du | Får du |
-| --- | --- |
-| `-o bok.docx` | Word-fil, för förlag och agenter |
-| `-o bok.epub` | e-bok, för läsplattor och provläsare |
-| `-o bok.pdf` | PDF, för utskrift |
+| Skriver du    | Får du                               |
+| ------------- | ------------------------------------ |
+| `-o bok.docx` | Word-fil, för förlag och agenter     |
+| `-o bok.epub` | e-bok, för läsplattor                |
+| `-o bok.pdf`  | PDF, för utskrift                    |
 
 ---
 
@@ -36,15 +35,7 @@ manus bygg -o bok.docx
 Det är allt. Verktyget letar upp alla kapitel i mappen och undermapparna,
 lägger dem i nummerordning och sätter ihop dem till en fil.
 
-**Din formatmall kommer med automatiskt.** Du behöver inte nämna den. Innan
-bygget skriver verktyget ut vad det hittade, så du ser att den kom med:
-
-```
-Använder:
-  docx-mall:  .../assets/custom-reference.docx
-```
-
-**Kontrollera ordningen först.** Fel kapitelordning är det enda felet som
+**Kontrollera ordningen först.** Fel kapitelordning är ett fel som
 inte syns förrän någon läser boken:
 
 ```bash
@@ -57,13 +48,12 @@ ingenting.
 **Två varianter värda att kunna:**
 
 ```bash
-manus bygg --lint -o bok.docx                        # städa texten först
-manus bygg -o bok.pdf -- --pdf-engine=xelatex --toc  # PDF med innehåll
+manus bygg --lint -o bok.docx                        # städa texten innan bygge
+manus bygg -o bok.pdf -- --pdf-engine=xelatex --toc  # PDF med innehållslista
 ```
 
 `--lint` lägger varje mening på egen rad i en tillfällig kopia innan bygget.
-Dina egna filer rörs inte. För PDF behövs `--pdf-engine=xelatex` om du valt
-ett eget typsnitt.
+Dina egna filer rörs inte.
 
 ---
 
@@ -72,14 +62,11 @@ ett eget typsnitt.
 Gå in i kapitlets mapp och kör samma kommando:
 
 ```bash
-cd 01_del_ett
 manus bygg -o kapitel.docx
 ```
 
 Mappen du står i räknas alltid, oavsett vad den heter. Alla numrerade filer
 i den kommer med, i ordning. Formatmallen följer med precis som vanligt.
-
-Tillbaka en nivå igen: `cd ..`
 
 ---
 
@@ -90,7 +77,7 @@ räknar du upp filerna själv. Då används [Pandoc](https://pandoc.org/) direkt
 
 ```bash
 pandoc 001_forord.md 02_del_tva/010_kapitel.md \
-  --reference-doc ~/Dropbox/Github/manusverktyg/assets/custom-reference.docx \
+  --reference-doc ~/sökväg/till/manusverktyg/assets/custom-reference.docx \
   -o urval.docx
 ```
 
@@ -123,30 +110,11 @@ manus bygg --manifest urval.yaml -o urval.docx
 
 Ordningen i listan är ordningen i dokumentet. Nu kommer formatmallen med
 automatiskt igen, och du kan spara listan och köra om den när som helst.
+Det här är ett lämpligt sätt att bygga upp din bok, så länge du inte tappar
+bort kapitel.
 
 Filnamn med mellanslag måste stå inom citattecken: `"mitt kapitel.md"`.
 
-**Verktyget varnar för filer som inte står i listan:**
-
-```
-VARNING: 12 fil(er) i trädet står varken i manifestet
-         eller under manus-uteslut
-```
-
-Det är med flit, och det är listans svaga punkt: skriver du ett nytt kapitel
-och glömmer lägga in det byggs det tyst bort. Varningen finns för att det
-inte ska kunna hända tyst.
-
-Men bygger du ett *utdrag* ur en hel bok är alla andra kapitel med rätta
-utanför, och då blir varningen bara lång. Lägg till de här raderna sist i
-filen, så tystnar den:
-
-```yaml
-metadata:
-  manus-uteslut:
-    - "*"
-    - "*/*"
-```
 
 Det betyder "allt annat är utanför med flit". Använd det för utdrag — inte
 när du bygger hela boken, för där vill du ha varningen kvar.
@@ -193,7 +161,7 @@ manus pratminus --in-place 01_del_ett/010_kapitel.md
 Utan filnamn tas hela boken, med samma regler som `manus bygg` — bara
 numrerade filer, bara numrerade mappar. Anteckningarna lämnas i fred.
 
-### Det som lämnas åt dig
+### Det som lämnas orört
 
 Verktyget rör bara det som säkert är en replik. Är det en boktitel eller
 ett citerat ord lämnas det ifred:
@@ -240,15 +208,13 @@ försvinner filen av sig själv.
 ## Om något går fel
 
 **"hittade inga filer som börjar med tre siffror"** — du står i fel mapp,
-eller så saknar filnamnen sina tre siffror. Skriv `pwd` för att se var du
-är, och `ls` för att se vad som finns där.
+eller så saknar filnamnen sina tre siffror.
 
 **Fel kapitel kom med, eller i fel ordning** — kör `manus bygg --lista`
-och läs igenom. Ordningen kommer ur filnamnen.
+och läs igenom. Ordningen beror på filnamnen.
 
 **Formatmallen kom inte med** — verktyget skriver ut vad det hittade innan
 bygget. Står det ingen `docx-mall:` där, kontrollera att filen heter exakt
 `custom-reference.docx`.
 
-Mer finns i [README.md](README.md), och om Pandoc självt i
-[PANDOC.md](PANDOC.md).
+Mer finns att läsa i [README.md](README.md).

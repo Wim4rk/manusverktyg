@@ -16,8 +16,8 @@ Allt — kommandon, hjälptexter och dokumentation — är på svenska.
 
 Verktygen förutsätter genomgående ett skönlitterärt manus: kapitel i
 läsordning, repliker och berättande De är _inte_ gjorda för facklitteratur,
-rapporter eller teknisk dokumentation —  där korsreferenser, 
-källhänvisningar, register och figurnumrering är av vikt.
+rapporter eller teknisk dokumentation. De hanterar inte korsreferenser, 
+källhänvisningar, register och figurnumrering bl. a.
 
 Slutstationen är [Pandoc](https://pandoc.org/) som sammanställer ett dokument
 i ett av tre format.
@@ -31,7 +31,7 @@ föbereda kompilering till ett manus.
 Markdown är utmärkt för att skriva text utan att behöva bry sig om format
 eller utseende. Källfilen är _läsbar för människor_, och det underlättar
 samarbete och redigering. Manusverktygen är beroende av filer i
-markdown.
+markdown. Det läser .md och .txt-filer.
 
 **Numreringen bär strukturen**
 Kapitelordningen utgår från numrerade filer. Ingen databas, ingen
@@ -46,12 +46,12 @@ listan — se [Manifest](#manifest--när-numreringen-inte-passar).
 **Anteckningar är inte kapitel.**
 Ett manus samlar på sig research, makulatur och skisser. Sådant får inte
 råka hamna i boken. En onumrerad katalog hamnar därför utanför bygget — 
-men går att bygga för sig om det behövs.
+men går att bygga för sig om det behövs. Samma med onumrerade filer.
 
 **Verktygen ska säga vad de gör.**
 `manus bygg` skriver ut kapitelordningen, vilka stilmallar den hittade och
 vilket typsnitt den valde, innan Pandoc kör. Fel kapitelordning är det enda
-felet som inte syns förrän någon annan läser boken.
+felet som inte syns förrän någon läser boken.
 
 Om du använder _git_ för att versionshantera ditt manuskript, då underlättar
 det att dela upp dokumentet så att varje mening får sin egen rad.
@@ -63,8 +63,8 @@ brödtexten, och den ändrar aldrig hur något renderas — en ensam radbrytning
 krävs en tom rad emellan.
 
 **Ingenting får försvinna.**
-Originalen rörs aldrig utan `--in-place`, och då sparas ändå en
-backup, `.bak`.
+Originalen rörs aldrig om du inte anger flaggan `--in-place`, och då sparas
+ändå en backup, `.bak`.
 
 ## Installation
 
@@ -80,24 +80,15 @@ igenom direkt. Vill du ha det någon annanstans: `make install PREFIX=/usr/local
 Beroenden: `pandoc`, `awk`, `find`, `fc-list` (fontconfig). För PDF med eget
 typsnitt behövs dessutom `xelatex` (`texlive-xetex`).
 
-## Snabbstart
-
-Ställ dig i bokens katalog:
-
-```bash
-manus bygg --lista                  # kontrollera kapitelordningen FÖRST
-manus bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
-```
-
 ## Vilka filer tas med, och i vilken ordning
 
 Sökningen går **rekursivt** genom hela trädet under katalogen du står i —
 men bara genom **numrerade** kataloger.
 
-| | Krav | Varför |
-| --- | --- | --- |
-| **Filer** | tre siffror först | kapitel kan vara  många och numreringen behöver luft: `010`, `020`, `021` |
-| **Kataloger** | en siffra räcker | delar är få: `01_del_ett`, `02_del_tva` |
+|               | Krav              | Varför |
+| ------------- | ----------------- | --------------------------------------- |
+| **Filer**     | tre siffror först | kapitel kan vara många och numreringen behöver luft: `010`, `020`, `021` |
+| **Kataloger** | två siffra räcker | delar är få: `01_kapitel_ett`, `02_kapitel_tva` |
 
 **En katalog som inte börjar med en siffra betyder att innehållet inte hör
 till bygget.** Anteckningar, makulatur och skisser hålls utanför även om
@@ -169,9 +160,9 @@ Pekar du ut en fil gäller precis den, oavsett vad den heter — ett utpekat
 namn är ett medvetet val.
 
 Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
-`--in-place`, och då sparas en `.bak`. `--lista` visar varje stycke som
-skulle ändras, före och efter, utan att röra någon textfil — kör alltid det
-först.
+`--in-place`, och då sparas en `.bak`. Flaggan `--lista` visar varje stycke
+som skulle ändras, före och efter, utan att röra någon textfil — kör alltid
+det först.
 
 Ett stycke görs om bara när alla tre stämmer: det **börjar** med ett
 citattecken, har ett avslutande, och ser ut som en replik — slutar med
@@ -198,8 +189,7 @@ replik:
 ```
 
 Hellre en replik du får göra om för hand än en mening som tyst blir
-förvanskad. YAML-frontmatter, kodblock och HTML-kommentarer kopieras rakt
-igenom — i arbetsanteckningar är citattecken ofta obalanserade med flit.
+förvanskad.
 
 **Fler än en replik i stycket.** Det vanligaste mönstret i svensk dialog är
 replik, berättande, replik i ett och samma stycke:
@@ -212,8 +202,8 @@ replik, berättande, replik i ett och samma stycke:
 ```
 
 Pratminus markerar en **replikväxling**, inte varje yttrande. Samma person
-talar, det kommer en berättande beat, samma person fortsätter — allt är en
-och samma tur. Därför sätts ett enda pratminus först i stycket, de inre
+talar, det kommer ett berättande avsnitt, samma person fortsätter — allt är en
+och samma rad. Därför sätts ett enda pratminus först i stycket, de inre
 citattecknen faller bort, och stycket delas **inte**. En delning skulle
 påstå att någon annan tar över.
 
@@ -309,8 +299,8 @@ ibland ska något annat sammanställas: ett urval till en agent, ett utdrag
 till en tävling, en inlämningsversion. Då är filerna godtyckliga, saknar
 gemensam numrering och ska inte döpas om.
 
-`-m, --manifest FIL` bygger i stället det som räknas upp i FIL, i den
-ordning det står där:
+`-m, --manifest filnamn.yaml` bygger i stället det som räknas upp i aktuell
+fil, i den ordning det står där:
 
 ```bash
 manus bygg --manifest urval.yaml -o urval.docx
@@ -332,39 +322,52 @@ metadata:
 `input-files` ger ordningen — ingen sortering sker. Filnamn med mellanslag,
 `#` eller kolon måste citeras, annars läser YAML dem som något annat.
 
-Samma fil går att köra rakt igenom Pandoc utan verktyget:
+Om du bara vill skriva in de filer du vill ha med så går det också. Lägg
+till det här i slutet av manifestet.
+
+```yaml
+metadata:
+  manus-uteslut:
+    - "*"
+    - "*/*"
+```
+
+Samma fil går att köra rakt igenom Pandoc utan manusverktygen:
 
 ```bash
 pandoc --defaults=urval.yaml -o urval.docx
 ```
 
-Då uteblir bara lint, typsnittskontrollen och den automatiska
-stilmallsupplockningen. Att `manus-uteslut` ligger under `metadata:` är
+Då uteblir lint, typsnittskontrollen och den automatiska
+stilmallen. Att `manus-uteslut` ligger under `metadata:` är
 avsiktligt: Pandoc vägrar okända nycklar på toppnivån men släpper igenom
 vad som helst där, så filen förblir giltig åt båda hållen.
 
 > **Sökvägarna räknas från katalogen du står i**, inte från manifestets egen
 > katalog. Det är Pandocs regel för `--defaults` och gäller därför här också.
-> Står du på fel ställe räknas de saknade filerna upp och bygget avbryts.
+> Står du på fel ställe räknas de saknade filerna upp, och bygget avbryts.
 
 ### Varför uteslutningslistan finns
 
-Numreringen har **en** sanningskälla: trädet. Ett manifest har två, och då
-kan de glida isär. Ett kapitel du skrivit men glömt lägga till i listan
-byggs tyst bort — och det märks först när någon läser boken.
+Numreringen har **en** sanningskälla: trädet. Du måste följa konventionen 
+med numrerade kataloger och filnamnen måste _alltid_ ha tre siffror för
+att komma med.
 
-Därför räknas varje byggbar fil i trädet som varken står i `input-files`
-eller matchar ett mönster i `manus-uteslut` upp som en varning:
+Ett manifest har **två** källor, och dåvkan de glida isär. Ett kapitel du
+skrivit men glömt lägga till i listan byggs tyst bort — och det märks
+först när någon läser boken.
+
+Med manifrestet räknas därför varje byggbar fil i trädet som inte står i
+`input-files` eller matchar ett mönster i `manus-uteslut` upp som en varning:
 
 ```
 VARNING: 1 fil(er) i trädet står varken i manifestet
          eller under manus-uteslut:
-             glomd.md
+             bortglömd.md
 ```
 
-Att tysta en fil kräver alltså att du skriver in den — att bestämma dig,
-inte att glömma. Det är det som ger manifestet numreringens garanti att
-ingenting försvinner tyst.
+Att tysta en fil kräver alltså att du skriver in den — du bestämmer, men
+glöm inget. Varningen är en garanti att ingenting försvinner tyst.
 
 ## Typsnitt som kanske inte finns
 
@@ -402,44 +405,51 @@ Kontrollen görs med `fc-list` och exakt familjenamn. `fc-match` duger inte:
 den svarar med ett ersättningstypsnitt och påstår därmed att allt finns.
 
 > **Namnkrock:** Pandoc har sedan 3.2 en egen variabel som också heter
-> `mainfontfallback`, men den betyder *teckenfallback* — den fyller i
+> `mainfontfallback`, men den betyder *teckenfallback* - den fyller i
 > enstaka glyfer som saknas i huvudtypsnittet, och bara för lualatex. Här
 > betyder nyckeln "reservtypsnitt om huvudtypsnittet saknas".
 
-## Byggtillgångar
+## Tillgångar - assets
 
-Tre filer plockas upp automatiskt om de finns:
+Tre filer används automstiskt så länge de finns.
 
-| Fil | Gör vad | Gäller |
-| --- | --- | --- |
+| Fil                     | Styr                                      | Gäller          |
+| ----------------------- | ----------------------------------------- | --------------- |
 | `custom-reference.docx` | stilmall (typsnitt, marginaler, rubriker) | docx, odt, pptx |
-| `vit-bakgrund.css` | vit bakgrund | html, epub |
-| `swedish-quotes.lua` | svenska citattecken (`”`) på båda sidor | alla format |
+| `vit-bakgrund.css`      | vit bakgrund                              | html, epub      |
+| `swedish-quotes.lua`    | svenska citattecken (`”`) på båda sidor   | alla format     |
 
 Pandocs förvalda stilmall sätter `html { background-color: #fdfdfd }` — inte
 riktigt vitt, vilket läses som en grå ton i e-boksläsare. `vit-bakgrund.css`
 läggs efter pandocs egen och vinner. Den rör ingenting annat än bakgrunden;
 typsnitt och marginaler lämnas som de är.
 
-### Stilmallen — så fungerar den
+## Stilmallen
 
-Du behöver inte göra något. Två villkor gäller:
+Du kan skapa en stilmall genom att redigera dokumentet `custom-referene.docx`
+som ligger i mappen assets. Ändra typsnitt för brödtext och titlar, och
+linjeavstånd så har du kommit långt. Den medföljande filen är Pandocs egen
+standardfil. Lägg förslagsvis din egen uppdaterade stilmall i 
+`./.pandoc/custom-regence.docx`
+
+Filen används automatiskt. Du behöver inte göra något. Men två villkor gäller:
 
 1. Filen måste heta **exakt** `custom-reference.docx`
 2. Utformatet måste vara docx, odt eller pptx — Pandoc struntar tyst i
    stilmallen för PDF och EPUB, så samma kommando fungerar för alla format
 
 `manus bygg` skriver ut vad den hittade innan Pandoc kör, så du ser direkt
-om den kom med:
+vilken mall den valde:
 
 ```
 Använder:
   stilmall:  ./bygg/custom-reference.docx
 ```
 
-### Var den ska ligga
+### Var ska den ligga?
 
-Fyra platser, i prioritetsordning — **första träffen vinner**:
+Det finn fyra giltiga platser, och de tillämpas i prioritetsordning. Om du
+lägger en kopia direkt i bokens katalog så är det alltid den som vinner.
 
 ```
 ./custom-reference.docx              ← bokens egen
@@ -448,20 +458,16 @@ Fyra platser, i prioritetsordning — **första träffen vinner**:
 assets/                              ← den allmänna, i det här repot
 ```
 
-Den allmänna ligger redan på plats, så utan att du gör något används den
+Den allmänna ligger redan på plats, så om du inte gör något så används den
 för alla böcker.
 
-`./` betyder katalogen du **står i när du kör kommandot**, inte där
-kapitlen ligger. Står du i bokens rot och kapitlen ligger i underkataloger
-är det bokens rot som räknas.
+### Kan jag ha fler än en
 
-### Fler än en
-
-Ja, på två sätt som gör olika saker:
+Ja, det kan du.
 
 **En egen per bok.** Lägg en `custom-reference.docx` i bokens katalog eller
-i `bygg/`. Den slår den allmänna automatiskt, utan flaggor. Bra när en bok
-ska se annorlunda ut än resten.
+i `bygg/`. Den slår den allmänna automatiskt, utan flaggor. Bra när böcker
+ska se olika ut. Kanske när du skickar ett manus till olika förlag.?
 
 **Flera varianter i samma bok.** Peka ut dem med `-r`:
 
@@ -479,24 +485,25 @@ pekas ut med `-r`. Anger du `-r` görs ingen automatisk sökning alls.
 
 ### Skapa eller ändra en stilmall
 
-Pandoc kan skriva ut sin egen som utgångspunkt:
+Du kan be pandoc att skriva ut sin egen standardmall som du kan ha som
+utgångspunkt:
 
 ```bash
 pandoc --print-default-data-file reference.docx > custom-reference.docx
 ```
 
 Öppna den i Word, ändra formatmallarna (`Body Text`, `Heading 1` …), och
-spara. Skriv ingen brödtext i den — bara stilarna används.
+spara. Ändra inte texten - bara stilarna kommer användas.
 
 Den bifogade filen i projektet är pandocs standard. Det är bara att formatera
-den och jobba vidare.
+om den och jobba vidare.
 
 ## Projektets katalogstruktur
 
 ```
 bin/manus              vägvisaren: manus lint / pratminus / bygg
-lib/lint.sh            städningen
-lib/pratminus.sh       replikomvandlingen
+lib/lint.sh            städaren
+lib/pratminus.sh       replikomvandlaren
 lib/bygg.sh            pandoc-körningen
 assets/                stilmallar och lua-filter
 ```

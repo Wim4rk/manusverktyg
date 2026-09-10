@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# bygg-bok.sh — kör Pandoc på alla numrerade dokument i katalogträdet.
+# bygg-bok.sh - kör Pandoc på alla numrerade dokument i katalogträdet.
 #
 # Tar med varje fil vars NAMN inleds med tre siffror (001_kapitel.md,
 # 010_efterord.md ...), i den här katalogen och alla underkataloger. Filerna
-# sorteras på hela sökvägen, så numret styr ordningen — och numrerade
+# sorteras på hela sökvägen, så numret styr ordningen - och numrerade
 # underkataloger sorteras före sitt innehåll, precis som man vill ha det:
 #
 #     010_del_ett/001_kapitel.md
@@ -24,7 +24,7 @@ set -euo pipefail
 readonly PROGNAME="${MANUS_KOMMANDO:-manus bygg}"
 
 # Följ symlänken hela vägen hem. Skriptet är tänkt att kunna ligga som en
-# länk i ~/.local/bin, och då pekar $BASH_SOURCE på länken — inte på
+# länk i ~/.local/bin, och då pekar $BASH_SOURCE på länken - inte på
 # arkivet där manus lint och stilmallen faktiskt ligger.
 readonly SCRIPT_FIL="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
 readonly SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_FIL")" && pwd)"
@@ -36,15 +36,14 @@ readonly TILLGANGAR="$ROT/assets"
 
 visa_hjalp() {
     cat <<EOF
-$PROGNAME — kör Pandoc på alla numrerade dokument i katalogträdet.
-För skönlitteratur: kapitel i läsordning, inte facklitteratur.
+$PROGNAME - kör Pandoc på alla numrerade dokument i katalogträdet.
 
 ANVÄNDNING
     $PROGNAME [FLAGGOR] [-- PANDOC-FLAGGOR...]
 
     Letar upp varje .md- och .txt-fil vars namn börjar med tre siffror, i
     nuvarande katalog och alla underkataloger, sorterar dem på sökväg och
-    kör Pandoc på alltihop.
+    kompilerar dem med Pandoc.
 
 FLAGGOR
     -o, --ut MÅL     Utfil (förval: bok.epub). Formatet följer av ändelsen.
@@ -60,8 +59,8 @@ FLAGGOR
                      katalog. Originalen rörs inte. Ger en mening per rad
                      och städade mellanslag innan Pandoc ser texten.
     -n, --lista      Visar bara vilka filer som skulle tas med, i ordning,
-                     och kör ingenting. Kör alltid detta först när ordningen
-                     spelar roll.
+                     och kör ingenting. Kör alltid detta först för att
+                     granska ordningen.
     -r, --referens FIL
                      Stilmall för DOCX (--reference-doc). Hittas normalt av
                      sig själv, se nedan.
@@ -76,14 +75,15 @@ FLAGGOR
     Allt efter -- skickas vidare orört till Pandoc:
         $PROGNAME -o bok.pdf -- --toc --pdf-engine=xelatex
 
-BYGGTILLGÅNGAR
-    Tre filer plockas upp automatiskt om de finns, och skriptet skriver ut
-    vilka det blev innan Pandoc kör:
+TILLGÅNGAR - ASSETS
+    Tre filer används automatiskt om de finns, och skriptet skriver ut
+    vilka som kommer användas innan Pandoc kör:
 
         custom-reference.docx   stilmall för DOCX-utdata
         vit-bakgrund.css        vit bakgrund i HTML och EPUB
         swedish-quotes.lua      svenska citattecken (”) på båda sidor
 
+STILMALLAR
     De letas upp i den här ordningen, så en enskild bok kan ha en egen
     stilmall utan att den allmänna behöver röras:
 
@@ -96,16 +96,15 @@ BYGGTILLGÅNGAR
     dem för de format de inte gäller, så samma kommando fungerar överallt.
 
     vit-bakgrund.css finns för att Pandocs förvalda stilmall sätter
-    html { background-color: #fdfdfd } — inte riktigt vitt, vilket läses
-    som en grå ton. Vår CSS läggs efter och vinner.
+    html { background-color: #fdfdfd } - inte riktigt vitt, vilket läses
+    som en grå ton. Vår CSS hamnar nedanför och vinner.
 
 MANIFEST
-    Numreringen är förvalet och räcker för en bok som läses rakt igenom.
-    Ett manifest är till för de andra jobben: ett urval till en agent, ett
-    utdrag till en tävling, en inlämningsversion — sammanställningar där
-    filerna inte har någon gemensam numrering och inte ska döpas om.
+    Filernas inledande nummersortering är det förvalda sättet att sortera
+    texter som ska med i boken. Bara numrerade kapitel kommer användas.
+    Om du vill använda en annan ordning skriver du den i en yaml-fil.
 
-    Manifestet är en vanlig Pandoc-defaults-fil:
+    Manifestet är en vanlig Pandoc-defaults-fil, här ett exempel (urval.yaml):
 
         input-files:
           - inledning.md
@@ -117,30 +116,17 @@ MANIFEST
             - "anteckningar/*"
             - makulatur.md
 
-    input-files ger ordningen. Ingen sortering sker — listan gäller precis
-    som den står. Filnamn med mellanslag, brädgård eller kolon måste
-    citeras, annars läser YAML dem som något annat.
+    Listan gäller precis som den står. Filnamn med mellanslag, brädgård
+    eller kolon måste citeras.
 
-    Samma fil går att köra rakt igenom Pandoc, utan det här skriptet:
+    Samma fil går också att köra rakt igenom Pandoc, utan manusverktyget:
 
         pandoc --defaults=urval.yaml -o ut.docx
 
-    Då uteblir bara lint, typsnittskontrollen och den automatiska
-    stilmallsupplockningen. manus-uteslut ligger under metadata: just för
-    att Pandoc vägrar okända nycklar på toppnivån men släpper igenom vad
-    som helst där — så filen förblir giltig åt båda hållen.
-
-    SÖKVÄGARNA RÄKNAS FRÅN KATALOGEN DU STÅR I, inte från manifestets egen
-    katalog. Det är Pandocs regel för --defaults och gäller därför här
-    också. Står du på fel ställe räknas de saknade filerna upp och bygget
-    avbryts.
-
-    manus-uteslut är skriptets eget tillägg och säger vilka filer i trädet
-    som medvetet inte hör till bygget. Posterna får vara glob-mönster.
-    Varje byggbar fil som varken står i input-files eller matchar ett
-    uteslutningsmönster räknas upp som en varning — det är det som hindrar
-    ett glömt kapitel från att tyst byggas bort. Numreringen kan inte glida
-    isär från verkligheten; en lista kan.
+    Manus-uteslut räknar upp filer som inte ska vara med. Posterna får
+    vara glob-mönster. Varje byggbar fil som varken står i input-files
+    eller matchar ett uteslutningsmönster räknas upp som en varning -
+    det är det som hindrar ett glömt kapitel från att tyst ignoreras.
 
 VILKA FILER TAS MED
     Sökningen går REKURSIVT genom hela trädet under katalogen du står i,
@@ -166,7 +152,7 @@ VILKA FILER TAS MED
 
     Katalogen du STÅR I räknas alltid, oavsett vad den heter. Ett eget
     bygge av anteckningarna görs alltså så här:
-        cd research && $PROGNAME -o anteckningar.pdf
+        cd anteckningar && $PROGNAME -o anteckningar.pdf
 
 ORDNING
     Filerna sorteras på hela sökvägen. En numrerad katalog hamnar därmed
@@ -181,7 +167,7 @@ ORDNING
     Numren måste vara lika många siffror inom varje nivå. 2_ sorterar
     efter 10_, medan 02_ sorterar före. Kör alltid --lista först.
 
-    Dolda filer och kataloger hoppas över, liksom .pandoc.md — det senare är
+    Dolda filer och kataloger hoppas över, liksom .pandoc.md - det senare är
     byggresultat från manus lint och inget källdokument.
 
 EXEMPEL
@@ -212,7 +198,7 @@ fel_anvandning() {
 # Typsnitt: mainfont med reserver
 #
 # xelatex kraschar om mainfont pekar på ett typsnitt som inte är installerat
-# — den försöker generera ett METAFONT-typsnitt, misslyckas, och det blir
+# - den försöker generera ett METAFONT-typsnitt, misslyckas, och det blir
 # ingen PDF alls. Ett manus som byggs på en annan dator än där det skrevs
 # ska inte stupa på det.
 #
@@ -221,20 +207,20 @@ fel_anvandning() {
 # tas mainfont bort helt, och Pandoc får använda sitt vanliga typsnitt.
 #
 # OBS: pandoc har sedan 3.2 en egen variabel som också heter
-# mainfontfallback, men den betyder något annat — den fyller i enstaka
+# mainfontfallback, men den betyder något annat - den fyller i enstaka
 # glyfer som saknas i huvudtypsnittet, och bara för lualatex. Här används
 # nyckeln som "reservtypsnitt om huvudtypsnittet saknas".
 # ---------------------------------------------------------------------
 
 # Sant om typsnittsfamiljen finns installerad. fc-list ger exakt matchning;
-# fc-match duger inte — den svarar med ett ersättningstypsnitt och påstår
+# fc-match duger inte - den svarar med ett ersättningstypsnitt och påstår
 # därmed att allt finns.
 typsnitt_finns() {
     [ -n "$1" ] || return 1
 
     # Inget grep -q här. Med -q avslutar grep vid första träffen, då får
     # fc-list och tr SIGPIPE, och 'set -o pipefail' gör att hela röret
-    # rapporterar fel — alltså "typsnittet saknas" trots att det finns.
+    # rapporterar fel - alltså "typsnittet saknas" trots att det finns.
     # -F och -- behövs för att typsnittsnamn med regex-tecken eller
     # inledande bindestreck inte ska tolkas som mönster eller flaggor.
     local traffar
@@ -308,7 +294,7 @@ las_manifest_lista() {
 
             # Citerade värden tas ordagrant. Filnamn får innehålla både #
             # och kolon, och då är citaten det enda som räddar dem.
-            # Klipps vid det AVSLUTANDE citattecknet, inte vid radslutet —
+            # Klipps vid det AVSLUTANDE citattecknet, inte vid radslutet -
             # efter det kan det stå en kommentar.
             forsta = substr(v, 1, 1)
             if (forsta == "\"" || forsta == "\047") {
@@ -417,7 +403,7 @@ fi
 #
 # Rekursivt genom hela trädet, men bara genom NUMRERADE kataloger. En
 # katalog som inte börjar med en siffra betyder att innehållet inte hör
-# till bygget — anteckningar, makulatur, skisser — och klipps bort med
+# till bygget - anteckningar, makulatur, skisser - och klipps bort med
 # -prune. Katalogen man står i räknas alltid, oavsett vad den heter, så
 # ett anteckningsbygge görs genom att ställa sig i den katalogen.
 #
@@ -435,7 +421,7 @@ uteslut=()
 
 if [ -n "$manifest" ]; then
     # Manifestläge: ordningen står i filen, inte i filnamnen. Ingen
-    # sortering — listan gäller som den är skriven.
+    # sortering - listan gäller som den är skriven.
     [ -f "$manifest" ] || fel_anvandning "hittar inte manifestet '$manifest'"
 
     while IFS= read -r rad; do
@@ -507,7 +493,7 @@ done
 # ---------------------------------------------------------------------
 # Manifestets svaga punkt: filer som glider ur listan
 #
-# Numreringen har en sanningskälla — trädet. Ett manifest har två, och då
+# Numreringen har en sanningskälla - trädet. Ett manifest har två, och då
 # kan de glida isär. Ett kapitel du skrivit men glömt lägga till byggs
 # tyst bort, och det syns inte förrän någon läser boken.
 #
@@ -600,7 +586,7 @@ done
 if [ -z "$metadata_kalla" ] && [ -f "./metadata.yaml" ]; then
     metadata_kalla="./metadata.yaml"
 fi
-# Sista utvägen: YAML-huvudet i det första dokumentet.
+# Sista positionen (vinner alltid): YAML-huvudet i det första dokumentet.
 if [ -z "$metadata_kalla" ]; then
     metadata_kalla="${filer[0]}"
 fi
@@ -626,7 +612,7 @@ if [ -f "$metadata_kalla" ]; then
         echo
         if [ -n "$valt" ]; then
             if [ "${#saknade[@]}" -gt 0 ]; then
-                echo "Typsnitt: ${saknade[0]} saknas — använder $valt i stället."
+                echo "Typsnitt: ${saknade[0]} saknas - använder $valt i stället."
                 for ((n = 1; n < ${#saknade[@]}; n++)); do
                     echo "          (även ${saknade[n]} saknas)"
                 done
@@ -635,7 +621,7 @@ if [ -f "$metadata_kalla" ]; then
             fi
             typsnitt_flaggor+=(-V "mainfont=$valt")
         else
-            echo "Typsnitt: inget av de önskade finns installerat —"
+            echo "Typsnitt: inget av de önskade finns installerat -"
             for t in "${saknade[@]}"; do
                 echo "          $t saknas"
             done
@@ -693,7 +679,7 @@ echo
 if [ "$separat" -eq 1 ]; then
     mkdir -p "$mal" || fel_anvandning "kunde inte skapa katalogen '$mal'"
 
-    # Utformatet kan inte läsas ur ett katalognamn — ta det från
+    # Utformatet kan inte läsas ur ett katalognamn - ta det från
     # --pandoc-flaggorna om det står ett -t/--to där, annars pdf.
     format="pdf"
     for ((n = 0; n < ${#pandoc_flaggor[@]}; n++)); do
@@ -714,7 +700,7 @@ if [ "$separat" -eq 1 ]; then
     antal=0
     for ((n = 0; n < ${#filer[@]}; n++)); do
         # Behåll katalogstrukturen. Två kapitel i olika delar av boken kan
-        # mycket väl heta samma sak — bara basnamnet skulle låta det andra
+        # mycket väl heta samma sak - bara basnamnet skulle låta det andra
         # skriva över det första, och räkningen nedan skulle ljuga om det.
         rel="${rel_sokvagar[n]}"
         ut="$mal/${rel%.*}.$andelse"
