@@ -215,49 +215,37 @@ citattecken, kanske flera stycken bort.
 
 ### Arbetslistan
 
-Varje körning skriver en att-göra-lista, `CITAT_PROBLEM.md`, i **varje
-katalog** som innehåller en fil med obalanserade citat. Listan hamnar alltså
-där arbetet ska göras, inte samlad på ett ställe:
+Varje körning skriver en att-göra-lista, `CITAT_PROBLEM.md`, i katalogen
+**där du står**:
 
 ```markdown
 # Citatproblem
 
-- [ ] **010_en_svår_födelse.md** rad 85
+- [ ] `02_urtid/010_en_svår_födelse.md` rad 85
 
   > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
 
 ---
 
-1 kvar. Senast genomsökt 2026-09-10.
+1 stycke kvar. Senast genomsökt 2026-09-10.
 ```
 
-Rätta i källfilen och kör igen, så uppdateras listan. Blir en katalog ren
-**tas filen bort** — en lista som ligger kvar tom läses som att det finns
-något ogjort.
+Listan gäller **körningen**, inte en katalog, och stämmer därför alltid —
+oavsett hur många filer som lästes. Står du i bokens rot och kör utan
+filargument får du hela bokens problem i en lista där; står du i ett kapitel
+får du kapitlets. Sökvägarna skrivs relativt samma katalog som listan ligger
+i.
 
-Bara kataloger som hör till **boken** får en lista, alltså kataloger med
-numrerade filer. Anteckningar och makulatur samlar aldrig på sig
-`CITAT_PROBLEM.md` — problemen syns i terminalen ändå när du kör på en
-sådan fil uttryckligen.
+Rätta i källfilen och kör igen, så uppdateras listan. Hittar körningen inga
+problem **tas filen bort** — en lista som ligger kvar tom läses som att det
+finns något ogjort.
 
-En lista skrivs eller tas bort **bara om körningen läste alla numrerade
-filer i katalogen**. Kör du på en enstaka fil kan verktyget inte veta om
-grannfilerna har problem, och rör då inte listan:
+Filen är genererad och skrivs över varje gång, så egna anteckningar i den
+överlever inte. Den läses aldrig in som källtext och kan alltså inte råka bli
+manus.
 
-```
-DELVIS GENOMSÖKTA
-    02_urtid: 1 av 7 filer lästa — CITAT_PROBLEM.md rörs inte
-```
-
-Annars skulle en körning på en ren fil kunna radera minnet av ett problem i
-filen bredvid.
-
-Filen är genererad och skrivs över varje gång — egna anteckningar i den
-överlever inte. Den läses aldrig in som källtext, så `manus pratminus *.md`
-tar inte med sin egen rapport.
-
-`--rapport FIL` ger dessutom en samlad lista över hela körningen.
-`--ingen-rapport` rör inga listor alls.
+`--rapport FIL` lägger listan någon annanstans. `--ingen-rapport` rör ingen
+lista alls.
 
 > **Ordningen mot `manus lint`:** kör `pratminus` **först**. Lint delar en
 > replik som innehåller flera meningar över flera rader, och då sitter det
