@@ -69,6 +69,10 @@ manus bygg --lista                  # kontrollera kapitelordningen FÖRST
 manus bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
 ```
 
+Nybörjare, eller bara kommit tillbaka efter ett halvår? **[KVICKGUIDE.md](KVICKGUIDE.md)**
+tar de fyra saker man faktiskt gör — hela boken, ett kapitel, och ett urval
+filer med eller utan lista — på en sida, skriven för den som inte kodar.
+
 ## Vilka filer tas med, och i vilken ordning
 
 Sökningen går **rekursivt** genom hela trädet under katalogen du står i —
