@@ -20,21 +20,36 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 
 ---
 
-## 1. Städa texten först - alltid
+## 1. Städa texten - en gång, innan du börjar skriva
 
 **Katalog-/filnamn måste vara nollutfyllda** (`010_`, `020_`, … `100_`) för att
 sorteringen ovan (och globbningen nedan) ska ge rätt läsordning. `2_` sorterar
 annars efter `10_`. Filnamn måste ha tre siffror först. Kataloger behöver bara
 två.
 
-Kör `manus lint` på källfilerna innan Pandoc någonsin ser dem. Den lägger
-varje mening på en egen rad och skiljer stycken åt med exakt en tomrad. Kör
-`manus lint --help` för hela beskrivningen.
+`manus lint` lägger varje mening på en egen rad och skiljer stycken åt med
+exakt en tomrad. Kör `manus lint --help` för hela beskrivningen.
 
-Markdown läser enkla returer `\n` som ett mellanslag. Om du vill ha ett 
+**Lint behövs inte för bygget.** Pandoc renderar en ostädad fil precis
+likadant: flera meningar på en rad, dubbla mellanslag och extra tomrader
+ger identiskt resultat. Det är kontrollerat genom att bygga samma text med
+och utan lint och jämföra utdata.
+
+Lint är alltså till för **källfilen**, inte för boken. Kör den en gång
+innan du börjar redigera, så slipper du tänka på den mer. Den är
+idempotent — att köra om den ändrar ingenting.
+
+Markdown läser enkla returer `\n` som ett mellanslag. Om du vill ha ett
 nytt stycke måste du lägga till en tom rad mellan: `\n\n`. Det kan vi
 utnyttja genom att lägga varje _mening_ på en egen rad. En tom rad visar
 var ett nytt stycke börjar. `manus lint` ändrar detta åt dig.
+
+**Bara en tom rad avgör var ett stycke börjar.** Markdown har också en
+hård radbrytning: två blanksteg sist på en rad. Den formen stöds inte
+här — `manus lint` tar bort avslutande blanksteg. Ett osynligt tecken ska
+inte styra hur texten bryts, och två blanksteg efter varandra är nästan
+alltid ett skrivfel. Behöver du bevara exakta radbrytningar, som i en
+dikt, använd radblock: börja varje rad med `| `.
 
 Vinsten får vi vid redigeringen: en ändrad mening syns som en ändrad rad
 i `git diff`, i stället för att hela stycket lyser upp.

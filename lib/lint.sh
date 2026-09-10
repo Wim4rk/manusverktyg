@@ -88,6 +88,23 @@ VAD DEN ÄNDRAR
         en tomrad börjar ett nytt. Två eller fler tomrader i följd dras ihop
         till exakt en.
 
+    Avslutande blanksteg tas bort.
+        Det gäller brödtext, rubriker, listpunkter och blockcitat. Kodblock
+        undantas — där kan blanksteg betyda något.
+
+        OBS ATT DET ÄR ETT MEDVETET VAL. Två blanksteg sist på en rad är i
+        Markdown en HÅRD RADBRYTNING (<br>) inuti stycket. Den formen stöds
+        alltså inte här, och lint tar bort den.
+
+        Skälet: ett osynligt tecken ska inte styra hur texten bryts. Två
+        blanksteg efter varandra är nästan alltid ett skrivfel, och de
+        överlever varken kopiering mellan program eller en editor som
+        trimmar rader. Bara en TOM RAD avgör var ett nytt stycke börjar.
+
+        Behöver du bevara exakta radbrytningar — dikter, sånger, listor i
+        dialog — använd radblock i stället: börja varje rad med "| ". Det
+        är synligt i källfilen och överlever allt.
+
 VAD DEN LÄMNAR I FRED
     YAML-frontmatter högst upp i filen, kodblock (\`\`\` eller ~~~),
     HTML-kommentarer (<!-- ... -->, även sådana som går över flera rader),
@@ -402,6 +419,7 @@ normalize_body() {
             if (is_heading(rad)) {
                 emit_paragraph()
                 sub(/^[ \t]+/, "", rad)
+                sub(/[ \t]+$/, "", rad)
                 separator()
                 block_kind = ""
                 print rad
