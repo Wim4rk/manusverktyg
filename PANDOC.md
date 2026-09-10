@@ -20,65 +20,14 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 
 ---
 
-## 1. Städa texten
+## 1. Städa texten först
 
-**Numren måste ha lika många siffror inom samma katalog** (`010_`, `020_`,
-… `100_`) för att sorteringen (och globbningen nedan) ska ge rätt
-läsordning. `2_` sorterar annars efter `10_`. Det räcker att namnet börjar
-med en siffra; tre är ett förslag som ger luft att skjuta in kapitel.
-`manus bygg` vägrar bygga om bredderna blandas.
+`manus lint` lägger en mening per rad och normaliserar tomrader. Det ändrar
+bara källfilen, aldrig det renderade resultatet - se
+[README](README.md#städa-texten-manus-lint).
 
-`manus lint` lägger varje mening på en egen rad och skiljer stycken åt med
-exakt en tomrad. Kör `manus lint --help` för hela beskrivningen.
-
-**Lint behövs inte för bygget.** Pandoc renderar en ostädad fil precis
-likadant: flera meningar på en rad, dubbla mellanslag och extra tomrader
-ger identiskt resultat. Det är kontrollerat genom att bygga samma text med
-och utan lint och jämföra utdata.
-
-Lint är alltså till för **källfilen**, inte för boken. Kör den en gång
-innan du börjar redigera, så slipper du tänka på den mer. Den är
-idempotent - att köra om den ändrar ingenting.
-
-Markdown läser enkla returer `\n` som ett mellanslag. Om du vill ha ett
-nytt stycke måste du lägga till en tom rad mellan: `\n\n`. Det kan vi
-utnyttja genom att lägga varje _mening_ på en egen rad. En tom rad visar
-var ett nytt stycke börjar. `manus lint` ändrar detta åt dig.
-
-**Bara en tom rad avgör var ett stycke börjar.** Markdown har också en
-hård radbrytning: två blanksteg sist på en rad. Den formen stöds inte
-här - `manus lint` tar bort avslutande blanksteg. Ett osynligt tecken ska
-inte styra hur texten bryts, och två blanksteg efter varandra är nästan
-alltid ett skrivfel. Behöver du bevara exakta radbrytningar, som i en
-dikt, använd radblock: börja varje rad med `| `. Ett utskrivet `<br>`
-fungerar i EPUB men försvinner i DOCX, så radblock är det säkra valet.
-
-Vinsten får vi vid redigeringen: en ändrad mening syns som en ändrad rad
-i `git diff`, i stället för att hela stycket lyser upp.
-
-Skriv gärna resultatet till en egen byggkatalog med `-o`. Filnamnen behålls
-oförändrade, så nollutfyllningen sorterar rätt och `pandoc bygge/*.md` fungerar
-rakt av.
-
-```bash
-manus lint -o bygge MinBok/*.md
-```
-
-Originalen rörs aldrig. Om du vill ändar filen du jobbar med använder du
-flaggan `--in-place`, men oftast är det bättre att skapa kopior av dokumenten
-som du kan läsa igenom. Behåll den fil du godkänner, radera den andra.
-
-Utan `-o` skrivs i stället `X.pandoc.md` bredvid varje `X.md`. Det duger för
-en enstaka fil, men lägger resultatet i skrivkatalogen:
-
-```bash
-manus lint Kapitel05.md
-```
-
-`manus bygg` hoppar över `*.pandoc.md`, så byggresultat råkar aldrig komma
-med som källdokument. 
-
-
+Numreringen som styr kapitelordningen beskrivs i
+[README](README.md#vilka-filer-tas-med-och-i-vilken-ordning).
 
 ---
 
@@ -93,10 +42,8 @@ pandoc Kapitel05.pandoc.md -o Kapitel05-korr.pdf
 
 ## 3. Rendera en hel bok
 
-Ställ dig i bokens katalog och kör `manus bygg`. Den letar själv upp alla
-filer vars namn börjar med en siffra, i katalogen och alla underkataloger,
-sorterar dem på sökväg och kör Pandoc på alltihop. Kapitelordningen kommer
-alltså ur numreringen:
+Ställ dig i bokens katalog och kör `manus bygg`. Den letar upp de numrerade
+filerna och kör Pandoc på alltihop, i nummerordning:
 
 ```
 001_forord.md
@@ -183,41 +130,12 @@ i olika delar av boken inte skriver över varandra.
 
 ---
 
-## 3.1 Byggtillgångar - stilmall och citattecken
+## 3.1 Byggtillgångar
 
-Två filer plockas upp av `manus bygg` automatiskt om de finns, och skriptet
-skriver ut vilka det blev innan Pandoc kör:
-
-| Fil | Gör vad | Gäller |
-| --- | --- | --- |
-| `custom-reference.docx` | stilmall (typsnitt, marginaler, rubriker) | docx, odt, pptx |
-| `swedish-quotes.lua` | svenska citattecken (`”`) på båda sidor | alla format |
-
-De letas upp i den här ordningen, så en enskild bok kan ha en egen stilmall
-utan att den allmänna behöver röras:
-
-```
-./custom-reference.docx
-./bygg/custom-reference.docx
-./.pandoc/custom-reference.docx
-manusverktyg/assets/       ← den allmänna
-```
-
-Stilmallen skickas med oavsett utformat - Pandoc struntar tyst i den för
-allt utom docx, odt och pptx, så samma kommando fungerar för alla format.
-
-Vill du styra dem för hand: `-r FIL` för stilmallen, `-f FIL` för ett
-lua-filter (kan upprepas), `--utan-mall` för att strunta i båda.
-
-### Gör skripten till riktiga kommandon
-
-```bash
-cd ~/Dropbox/Github/manusverktyg
-make install
-```
-
-Det lägger en symlänk `~/.local/bin/manus` till repot - inte en kopia, så
-ändringar slår igenom direkt. `make uninstall` tar bort den igen.
+`manus bygg` plockar upp `custom-reference.docx` och `swedish-quotes.lua`
+automatiskt och skriver ut vilka den hittade. Sökordningen och flaggorna
+`-r`, `-f` och `--utan-mall` står i
+[README](README.md#stilmallen).
 
 ### Utan skripten, för hand
 
@@ -236,7 +154,7 @@ pandoc MinBok/**/*.md \
 
 Skillnaden mot `manus bygg` är att `**/*.md` tar med *alla* markdown-filer,
 även utkast och anteckningar som inte hör till boken. Det är därför
-tresiffriga prefix finns.
+numrerade filnamn finns.
 
 ---
 

@@ -41,7 +41,7 @@ Se nedan för fil- och katalognumreringar.
 
 Textordningen kan också styras med en yaml-fil. Använd flaggan
 `--manifest`. Verktyget varnar för varje fil som eventuellt fallit ur
-listan - se [Manifest](#manifest--när-numreringen-inte-passar).
+listan - se [Manifest](#manifest---när-numreringen-inte-passar).
 
 **Anteckningar är inte kapitel.**
 Ett manus samlar på sig research, makulatur och skisser. Sådant får inte
@@ -53,14 +53,9 @@ men går att bygga för sig om det behövs. Samma med onumrerade filer.
 vilket typsnitt den valde, innan Pandoc kör. Fel kapitelordning är det enda
 felet som inte syns förrän någon läser boken.
 
-Om du använder _git_ för att versionshantera ditt manuskript, då underlättar
-det att dela upp dokumentet så att varje mening får sin egen rad.
-Ligger ett stycke på en enda lång rad lyser hela stycket upp i en `git diff`
-så fort du rättar ett ord. Ligger varje mening på egen rad ser du exakt
-vilken mening som ändrades. Det är den enda ändring `manus lint` gör åt
-brödtexten, och den ändrar aldrig hur något renderas - en ensam radbrytning
-är en mjuk brytning i Markdown och betyder mellanslag. För nytt stycke
-krävs en tom rad emellan.
+**Källfilen ska vara läsbar för människor.**
+Versionshanterar du med git syns en ändrad mening som en ändrad rad, i
+stället för att hela stycket lyser upp. Det är vad `manus lint` ordnar.
 
 **Ingenting får försvinna.**
 Originalen rörs aldrig om du inte anger flaggan `--in-place`, och då sparas
@@ -151,13 +146,38 @@ sitt eget innehåll och delarna kommer i nummerordning:
 09_epilog/010_slutet.md
 ```
 
-Numren måste ha lika många siffror inom varje nivå: `2_` sorterar **efter**
-`10_`, medan `02_` sorterar före. Kör alltid `manus bygg --lista` först -
-fel kapitelordning är det enda felet som inte syns förrän någon annan läser
-boken.
+`kapitel_001.md` tas inte med - siffrorna måste sitta först. Dolda
+kataloger och `*.pandoc.md` hoppas över.
 
-`kapitel_001.md` och `01_utkast.md` tas inte med: siffrorna måste sitta
-först, och filer kräver tre. Dolda kataloger och `*.pandoc.md` hoppas över.
+## Städa texten: manus lint
+
+`manus lint` lägger varje mening på en egen rad och skiljer stycken åt med
+exakt en tomrad.
+
+**Lint behövs inte för bygget.** Pandoc renderar en ostädad fil precis
+likadant - flera meningar på en rad, dubbla mellanslag och extra tomrader
+ger identiskt resultat. Kontrollerat genom att bygga samma text med och
+utan lint och jämföra.
+
+Lint är till för **källfilen**: en ändrad mening syns som en ändrad rad i
+`git diff` i stället för att hela stycket lyser upp. Kör den en gång innan
+du börjar redigera. Den är idempotent - att köra om den ändrar ingenting.
+
+```bash
+manus lint -o bygge MinBok/*.md   # kopior i egen katalog
+manus lint Kapitel05.md           # skriver Kapitel05.pandoc.md bredvid
+manus lint --in-place MinBok/*.md # på plats, med .bak
+```
+
+Originalen rörs aldrig utan `--in-place`. `manus bygg` hoppar över
+`*.pandoc.md`, så byggresultat kommer aldrig med som källdokument.
+
+**Bara en tom rad avgör var ett stycke börjar.** Markdown har också en hård
+radbrytning - två blanksteg sist på en rad - men den formen stöds inte här:
+lint tar bort avslutande blanksteg. Ett osynligt tecken ska inte styra hur
+texten bryts. Behöver du exakta radbrytningar, som i en dikt, använd
+radblock: börja varje rad med `| `. Ett utskrivet `<br>` fungerar i EPUB men
+försvinner i DOCX.
 
 ## Repliker: citattecken till pratminus
 
@@ -180,37 +200,23 @@ manus pratminus skisser/utkast.md    # en utpekad fil, oavsett namn
 Pekar du ut en fil gäller precis den, oavsett vad den heter - ett utpekat
 namn är ett medvetet val.
 
-Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
-`--in-place`, och då sparas en `.bak`. Flaggan `--lista` visar varje stycke
-som skulle ändras, före och efter, utan att röra någon textfil - kör alltid
-det först.
+Originalet rörs aldrig utan `--in-place`, och då sparas en `.bak`. `--lista`
+visar varje stycke som skulle ändras, före och efter, utan att röra någon
+textfil - kör alltid det först.
 
-Ett stycke görs om bara när alla tre stämmer: det **börjar** med ett
-citattecken, har ett avslutande, och ser ut som en replik - slutar med
-skiljetecken innanför citatet eller följs av ett kommatecken utanför det.
-
-Kommatecknet räknas åt **båda** hållen. Korrekt svenska sätter det utanför
-citattecknet, men innanför är vanligt i praktiken, och när mönstret dyker
-upp är det med säkerhet en replik:
+Ett stycke görs om bara när tre saker stämmer: det **börjar** med ett
+citattecken, har ett avslutande, och ser ut som en replik - alltså slutar
+med skiljetecken innanför citatet, eller följs av ett kommatecken utanför.
+Kommatecknet räknas åt båda hållen, eftersom båda skrivsätten förekommer:
 
 ```
-”Det blir bra”, säger Ulf.      →   -- Det blir bra, säger Ulf.
-”Vilket väder,” säger Sara.     →   -- Vilket väder, säger Sara.
+”Det blir bra”, säger Ulf.        →  -- Det blir bra, säger Ulf.
+”Vilket väder,” säger Sara.       →  -- Vilket väder, säger Sara.
+”Nomen libri” är arbetsnamnet.       orörd - en titel, inte en replik
+”Han sa ”hej” till mig”, sa hon.     orörd - nästlade citat
 ```
 
-Båda ger samma resultat, eftersom kommat hamnar rätt av sig självt när
-citattecknen faller bort.
-
-Den sista regeln finns för att ett citat först på raden inte alltid är en
-replik:
-
-```
-”Nomen libri” är arbetsnamnet.        lämnas orörd - en titel, inte en replik
-”Han sa ”hej” till mig”, sa hon.      lämnas orörd - nästlade citat
-```
-
-Hellre en replik du får göra om för hand än en mening som tyst blir
-förvanskad.
+Hellre en replik du får göra om för hand än en mening som tyst förvanskas.
 
 **Fler än en replik i stycket.** Det vanligaste mönstret i svensk dialog är
 replik, berättande, replik i ett och samma stycke:
@@ -223,12 +229,11 @@ replik, berättande, replik i ett och samma stycke:
 ```
 
 Pratminus markerar en **replikväxling**, inte varje yttrande. Samma person
-talar, det kommer ett berättande avsnitt, samma person fortsätter - allt är en
-och samma rad. Därför sätts ett enda pratminus först i stycket, de inre
-citattecknen faller bort, och stycket delas **inte**. En delning skulle
+talar, berättar, fortsätter - en och samma tur. Därför ett enda pratminus
+först i stycket, inga inre citattecken, ingen delning. En delning skulle
 påstå att någon annan tar över.
 
-**Står repliken inte först** i stycket bryts stycket i stället:
+**Står repliken inte först** bryts stycket i stället:
 
 ```
 Hon vände sig om. ”Vad gör du?” frågade hon.
@@ -239,9 +244,8 @@ Hon vände sig om.
 -- Vad gör du? frågade hon.
 ```
 
-Pratminus måste inleda stycket, och här är det en **ny** talartur som
-börjar - till skillnad från fallet ovan, där samma tur fortsätter efter en
-beat. Berättandet blir ett eget stycke.
+Här börjar en **ny** talartur, till skillnad från fallet ovan. Berättandet
+blir ett eget stycke.
 
 ### Stycket är enheten, inte raden
 
@@ -447,11 +451,12 @@ typsnitt och marginaler lämnas som de är.
 
 ## Stilmallen
 
-Du kan skapa en stilmall genom att redigera dokumentet `custom-referene.docx`
-som ligger i mappen assets. Ändra typsnitt för brödtext och titlar, och
-linjeavstånd så har du kommit långt. Den medföljande filen är Pandocs egen
-standardfil. Lägg förslagsvis din egen uppdaterade stilmall i 
-`./.pandoc/custom-regence.docx`
+Du skapar en stilmall genom att redigera `custom-reference.docx` i mappen
+`assets`. Ändra typsnitt för brödtext och rubriker, och linjeavstånd, så har
+du kommit långt. Den medföljande filen är Pandocs egen standardfil.
+
+Lägg din egen i bokens katalog. Namnet måste vara exakt
+`custom-reference.docx` - se nedan om var den kan ligga.
 
 Filen används automatiskt. Du behöver inte göra något. Men två villkor gäller:
 
@@ -469,7 +474,7 @@ Använder:
 
 ### Var ska den ligga?
 
-Det finn fyra giltiga platser, och de tillämpas i prioritetsordning. Om du
+Det finns fyra giltiga platser, och de tillämpas i prioritetsordning. Om du
 lägger en kopia direkt i bokens katalog så är det alltid den som vinner.
 
 ```
@@ -504,20 +509,8 @@ pekas ut med `-r`. Anger du `-r` görs ingen automatisk sökning alls.
 `--utan-mall` stänger av automatiken helt. Ger du både `--utan-mall` och
 `-r` vinner `-r` - en uttrycklig flagga går före ett avstängt automatläge.
 
-### Skapa eller ändra en stilmall
-
-Du kan be pandoc att skriva ut sin egen standardmall som du kan ha som
-utgångspunkt:
-
-```bash
-pandoc --print-default-data-file reference.docx > custom-reference.docx
-```
-
-Öppna den i Word, ändra formatmallarna (`Body Text`, `Heading 1` …), och
-spara. Ändra inte texten - bara stilarna kommer användas.
-
-Den bifogade filen i projektet är pandocs standard. Det är bara att formatera
-om den och jobba vidare.
+Vill du börja från Pandocs egen standardmall i stället för den medföljande,
+se [PANDOC.md](PANDOC.md#5-skapa-manus-mallen-manus-malldocx---en-gång).
 
 ## Projektets katalogstruktur
 
