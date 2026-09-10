@@ -46,7 +46,7 @@ KOMMANDON
                  $PROGNAME pratminus --help
 
     bygg     Kör Pandoc på alla dokument i katalogträdet vars namn börjar
-             med tre siffror, i nummerordning. Bygger EPUB, PDF eller DOCX.
+             med en siffra, i nummerordning. Bygger EPUB, PDF eller DOCX.
                  $PROGNAME bygg --help
 
     hjälp    Den här texten. Även -h och --help.

@@ -3,11 +3,11 @@
 I projektets grund ligger Pandoc. Det är ett program för att konvertera
 olika dokument från ett filformat till ett annat.
 
-Så här går du från
+Manusverktygen hjälper dig gå från
 [markdown](https://pandoc.org/MANUAL.html#pandocs-markdown) till format
-som är enkla att läsa(EPUB/PDF) eller till ett inlämningsklart romanmanus
+som är enklare att läsa(EPUB/PDF) eller till ett inlämningsklart manus
 (DOCX).
-[Pandoc](https://pandoc.org/) gör jobbet; `manus` gör bara det Pandoc inte
+[Pandoc](https://pandoc.org/) gör jobbet; `manus` gör det Pandoc inte
 kan - hittar filerna, håller ordningen, och väljer typsnitt som faktiskt
 finns i datorn.
 
@@ -20,12 +20,13 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 
 ---
 
-## 1. Städa texten - en gång, innan du börjar skriva
+## 1. Städa texten
 
-**Katalog-/filnamn måste vara nollutfyllda** (`010_`, `020_`, … `100_`) för att
-sorteringen ovan (och globbningen nedan) ska ge rätt läsordning. `2_` sorterar
-annars efter `10_`. Filnamn måste ha tre siffror först. Kataloger behöver bara
-två.
+**Numren måste ha lika många siffror inom samma katalog** (`010_`, `020_`,
+… `100_`) för att sorteringen (och globbningen nedan) ska ge rätt
+läsordning. `2_` sorterar annars efter `10_`. Det räcker att namnet börjar
+med en siffra; tre är ett förslag som ger luft att skjuta in kapitel.
+`manus bygg` varnar om bredderna blandas.
 
 `manus lint` lägger varje mening på en egen rad och skiljer stycken åt med
 exakt en tomrad. Kör `manus lint --help` för hela beskrivningen.
@@ -93,7 +94,7 @@ pandoc Kapitel05.pandoc.md -o Kapitel05-korr.pdf
 ## 3. Rendera en hel bok
 
 Ställ dig i bokens katalog och kör `manus bygg`. Den letar själv upp alla
-filer vars namn börjar med tre siffror, i katalogen och alla underkataloger,
+filer vars namn börjar med en siffra, i katalogen och alla underkataloger,
 sorterar dem på sökväg och kör Pandoc på alltihop. Kapitelordningen kommer
 alltså ur numreringen:
 

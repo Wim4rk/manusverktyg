@@ -85,10 +85,25 @@ typsnitt behövs dessutom `xelatex` (`texlive-xetex`).
 Sökningen går **rekursivt** genom hela trädet under katalogen du står i -
 men bara genom **numrerade** kataloger.
 
-|               | Krav              | Varför |
-| ------------- | ----------------- | --------------------------------------- |
-| **Filer**     | tre siffror först | kapitel kan vara många och numreringen behöver luft: `010`, `020`, `021` |
-| **Kataloger** | två siffra räcker | delar är få: `01_kapitel_ett`, `02_kapitel_tva` |
+|               | Krav                 | Förslag |
+| ------------- | -------------------- | --------------------------------------- |
+| **Filer**     | minst en siffra först | tre siffror ger luft att skjuta in ett kapitel: `010`, `020`, `021` |
+| **Kataloger** | minst en siffra först | två räcker, delar är få: `01_kapitel_ett`, `02_kapitel_tva` |
+
+**Det som måste stämma är att numren har lika många siffror inom samma
+katalog.** Sorteringen är lexikografisk, inte numerisk, så `2_` hamnar
+efter `10_` medan `02_` hamnar före. Blandar du bredder varnar `manus bygg`
+innan Pandoc kör:
+
+```
+VARNING: blandade siffbredder. Sorteringen är lexikografisk, inte
+         numerisk, så 2_ hamnar EFTER 10_. Nollutfyll till samma
+         bredd inom varje katalog:
+             katalogen du står i (filer): 10_kap.md, 1_kap.md
+```
+
+Filer och kataloger jämförs var för sig, så tre siffror på kapitlen och två
+på delarna är helt i sin ordning.
 
 **En katalog som inte börjar med en siffra betyder att innehållet inte hör
 till bygget.** Anteckningar, makulatur och skisser hålls utanför även om
@@ -148,7 +163,7 @@ manus skrivet med citattecken gör `manus pratminus` om dem:
 ```
 
 **Vilka filer.** Utan filargument gäller samma regler som för `manus bygg`:
-bara namn som börjar med tre siffror, och bara genom numrerade kataloger.
+bara namn som börjar med en siffra, och bara genom numrerade kataloger.
 Anteckningar, research och makulatur hålls utanför här också.
 
 ```bash
@@ -349,9 +364,9 @@ vad som helst där, så filen förblir giltig åt båda hållen.
 
 ### Varför uteslutningslistan finns
 
-Numreringen har **en** sanningskälla: trädet. Du måste följa konventionen 
-med numrerade kataloger och filnamnen måste _alltid_ ha tre siffror för
-att komma med.
+Numreringen har **en** sanningskälla: trädet. Du måste följa konventionen
+med numrerade kataloger, och filnamnen måste börja med en siffra för att
+komma med.
 
 Ett manifest har **två** källor, och dåvkan de glida isär. Ett kapitel du
 skrivit men glömt lägga till i listan byggs tyst bort - och det märks

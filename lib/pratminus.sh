@@ -35,7 +35,7 @@ ANVÄNDNING
     $PROGNAME [FLAGGOR] [FIL...]
 
     Utan FIL letas filerna upp med SAMMA regler som 'manus bygg': bara
-    namn som börjar med tre siffror, och bara genom numrerade kataloger.
+    namn som börjar med en siffra, och bara genom numrerade kataloger.
     Anteckningar, research och makulatur hålls därmed utanför, precis som
     de hålls utanför bygget.
 
@@ -266,7 +266,7 @@ done
 # Vilka filer
 #
 # Utan FIL-argument letas de upp med SAMMA regler som manus bygg: bara
-# filer vars namn börjar med tre siffror, och bara genom numrerade
+# filer vars namn börjar med en siffra, och bara genom numrerade
 # kataloger. Anteckningar, research och makulatur hålls därmed utanför,
 # precis som de hålls utanför bygget.
 #
@@ -282,14 +282,14 @@ if [ "${#files[@]}" -eq 0 ]; then
         find . \
             \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
             \( -type f \
-               \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
+               \( -name '[0-9]*.md' -o -name '[0-9]*.txt' \) \
                ! -name '*.pandoc.md' ! -name '*.pratminus.md' \
                -print0 \) \
             2>/dev/null | LC_ALL=C sort -z
     )
 
     if [ "${#files[@]}" -eq 0 ]; then
-        echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
+        echo "$PROGNAME: hittade inga filer som börjar med en siffra här." >&2
         echo "Ange en fil uttryckligen, eller kör '$PROGNAME --help'." >&2
         exit 1
     fi

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # bygg-bok.sh - kör Pandoc på alla numrerade dokument i katalogträdet.
 #
-# Tar med varje fil vars NAMN inleds med tre siffror (001_kapitel.md,
+# Tar med varje fil vars NAMN inleds med en siffra (001_kapitel.md,
 # 010_efterord.md ...), i den här katalogen och alla underkataloger. Filerna
 # sorteras på hela sökvägen, så numret styr ordningen - och numrerade
 # underkataloger sorteras före sitt innehåll, precis som man vill ha det:
@@ -41,7 +41,7 @@ $PROGNAME - kör Pandoc på alla numrerade dokument i katalogträdet.
 ANVÄNDNING
     $PROGNAME [FLAGGOR] [-- PANDOC-FLAGGOR...]
 
-    Letar upp varje .md- och .txt-fil vars namn börjar med tre siffror, i
+    Letar upp varje .md- och .txt-fil vars namn börjar med en siffra, i
     nuvarande katalog och alla underkataloger, sorterar dem på sökväg och
     kompilerar dem med Pandoc.
 
@@ -129,15 +129,23 @@ VILKA FILER TAS MED
     Sökningen går REKURSIVT genom hela trädet under katalogen du står i,
     men bara genom numrerade kataloger.
 
-    FILER behöver TRE siffror först i namnet, och ändelsen .md eller .txt:
+    FILER behöver minst EN siffra först i namnet, och ändelsen .md eller
+    .txt:
         010_prolog.md               tas med
-        021_kapitel.md              tas med
-        0001_prolog.md              tas med (börjar med tre siffror)
+        1_prolog.md                 tas med
         kapitel_001.md              tas INTE med (siffrorna sitter inte först)
-        01_utkast.md                tas INTE med (bara två siffror)
+        utkast.md                   tas INTE med (ingen siffra alls)
 
-    KATALOGER behöver bara EN siffra först. Kapitel är många och behöver
-    luft i numreringen; delar är få.
+    TRE siffror är ett förslag, inte ett krav. Kapitel är många, och tre
+    siffror ger luft att skjuta in ett kapitel mellan 010 och 020.
+
+    DET SOM MÅSTE STÄMMA är att numren har LIKA MÅNGA SIFFROR inom samma
+    katalog. Sorteringen är lexikografisk, inte numerisk, så 2_ hamnar
+    efter 10_ medan 02_ hamnar före. Blandas bredder varnar skriptet innan
+    Pandoc kör. Filer och kataloger jämförs var för sig, så tre siffror på
+    kapitlen och två på delarna är helt i sin ordning.
+
+    KATALOGER behöver också minst EN siffra först.
         01_del_ett/                 gås igenom
         02_del_tva/                 gås igenom
         research/                   hoppas över HELT
@@ -458,14 +466,14 @@ else
         find . \
             \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
             \( -type f \
-               \( -name '[0-9][0-9][0-9]*.md' -o -name '[0-9][0-9][0-9]*.txt' \) \
+               \( -name '[0-9]*.md' -o -name '[0-9]*.txt' \) \
                ! -name '*.pandoc.md' \
                -print0 \) \
             2>/dev/null | LC_ALL=C sort -z
     )
 
     if [ "${#files[@]}" -eq 0 ]; then
-        echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
+        echo "$PROGNAME: hittade inga filer som börjar med en siffra här." >&2
         echo "Kör '$PROGNAME --help' för vilka namn som räknas." >&2
         exit 1
     fi
@@ -529,6 +537,68 @@ if [ -n "$manifest" ]; then
         echo "         De byggs INTE. Lägg dem i input-files om de ska med,"
         echo "         eller under manus-uteslut för att slippa varningen."
     fi
+fi
+
+# ---------------------------------------------------------------------
+# Blandade siffbredder
+#
+# Sorteringen är lexikografisk, inte numerisk. Den ger rätt läsordning
+# bara när numren har lika många siffror inom samma katalog: 2_ hamnar
+# efter 10_, medan 02_ hamnar före. Numreringen i sig räcker alltså, men
+# bredden måste vara enhetlig.
+#
+# Det här är det enda felet som inte syns förrän någon läser boken, så
+# det ska sägas högt i stället för att upptäckas sent.
+# ---------------------------------------------------------------------
+bredd_varning=$(
+    printf '%s\n' "${rel_paths[@]}" | awk '
+        {
+            # Varje numrerad komponent räknas mot sina syskon av samma
+            # slag. Filer och kataloger har olika konventioner med flit -
+            # tre siffror för kapitel, färre för delar - så de jämförs var
+            # för sig.
+            n = split($0, del, "/")
+            forald = "."
+            for (i = 1; i <= n; i++) {
+                if (match(del[i], /^[0-9]+/)) {
+                    slag = (i == n ? "fil" : "katalog")
+                    grupp = forald SUBSEP slag
+                    b = RLENGTH
+                    if (!((grupp SUBSEP b) in sedd)) {
+                        sedd[grupp SUBSEP b] = 1
+                        antal_bredder[grupp]++
+                        bredder[grupp] = bredder[grupp] " " b
+                    }
+                    exempel[grupp SUBSEP b] = del[i]
+                }
+                forald = (forald == "." ? del[i] : forald "/" del[i])
+            }
+        }
+        END {
+            for (k in antal_bredder) {
+                if (antal_bredder[k] < 2) continue
+                split(k, kd, SUBSEP)
+                namn = (kd[1] == "." ? "katalogen du står i" : kd[1])
+                rad = ""
+                m = split(bredder[k], b_lista, " ")
+                for (j = 1; j <= m; j++) {
+                    if (b_lista[j] == "") continue
+                    rad = rad (rad == "" ? "" : ", ") exempel[k SUBSEP b_lista[j]]
+                }
+                printf "%s (%ser): %s\n", namn, kd[2], rad
+            }
+        }
+    ' | LC_ALL=C sort
+)
+
+if [ -n "$bredd_varning" ]; then
+    echo
+    echo "VARNING: blandade siffbredder. Sorteringen är lexikografisk, inte"
+    echo "         numerisk, så 2_ hamnar EFTER 10_. Nollutfyll till samma"
+    echo "         bredd inom varje katalog:"
+    while IFS= read -r rad; do
+        [ -n "$rad" ] && echo "             $rad"
+    done <<< "$bredd_varning"
 fi
 
 if [ "$list_only" -eq 1 ]; then

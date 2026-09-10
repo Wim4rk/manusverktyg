@@ -203,8 +203,12 @@ försvinner filen av sig själv.
 
 ## Om något går fel
 
-**"hittade inga filer som börjar med tre siffror"** - du står i fel mapp,
-eller så saknar filnamnen sina tre siffror.
+**"hittade inga filer som börjar med en siffra"** - du står i fel mapp,
+eller så saknar filnamnen sin numrering.
+
+**"blandade siffbredder"** - du har till exempel `2_kap.md` och `10_kap.md`
+i samma mapp. Sorteringen är bokstavsordning, så `10_` hamnar före `2_`.
+Nollutfyll till samma bredd: `02_` och `10_`.
 
 **Fel kapitel kom med, eller i fel ordning** - kör `manus bygg --lista`
 och läs igenom. Ordningen beror på filnamnen.
