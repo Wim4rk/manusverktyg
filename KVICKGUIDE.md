@@ -210,16 +210,21 @@ replik, och den behåller ett enda pratminus:
 -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 ```
 
-Två saker lämnas helt åt dig. Om ett citattecken saknas någonstans, för då
-går det inte att gissa vilket. Och om repliken inte står först i stycket —
-då behövs en styckebrytning, och var den ska gå avgör du:
+Står repliken mitt i ett stycke bryts stycket, eftersom en ny talare tar
+vid och pratminus måste inleda stycket:
 
 ```
 Hon vände sig om. ”Vad gör du?” frågade hon.
 ```
+```
+Hon vände sig om.
 
-De ställena samlas i en att-göra-lista, `CITAT_PROBLEM.md`, i mappen du
-står i, med skälet utskrivet:
+-- Vad gör du? frågade hon.
+```
+
+En sak lämnas helt åt dig: om ett citattecken saknas någonstans, för då går
+det inte att gissa vilket. De ställena samlas i en att-göra-lista,
+`CITAT_PROBLEM.md`, i mappen du står i:
 
 ```markdown
 - [ ] `02_urtid/010_kapitel.md` rad 85 — ett citattecken saknas, eller ett står för mycket

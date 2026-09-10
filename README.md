@@ -173,10 +173,21 @@ Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
 skulle ändras, före och efter, utan att röra någon textfil — kör alltid det
 först.
 
-En rad görs om bara när alla tre stämmer: den **börjar** med ett
-citattecken, har ett avslutande på samma rad, och ser ut som en replik —
-slutar med skiljetecken innanför citatet eller följs av ett kommatecken
-utanför det.
+Ett stycke görs om bara när alla tre stämmer: det **börjar** med ett
+citattecken, har ett avslutande, och ser ut som en replik — slutar med
+skiljetecken innanför citatet eller följs av ett kommatecken utanför det.
+
+Kommatecknet räknas åt **båda** hållen. Korrekt svenska sätter det utanför
+citattecknet, men innanför är vanligt i praktiken, och när mönstret dyker
+upp är det med säkerhet en replik:
+
+```
+”Det blir bra”, säger Ulf.      →   -- Det blir bra, säger Ulf.
+”Vilket väder,” säger Sara.     →   -- Vilket väder, säger Sara.
+```
+
+Båda ger samma resultat, eftersom kommat hamnar rätt av sig självt när
+citattecknen faller bort.
 
 Den sista regeln finns för att ett citat först på raden inte alltid är en
 replik:
@@ -206,15 +217,20 @@ och samma tur. Därför sätts ett enda pratminus först i stycket, de inre
 citattecknen faller bort, och stycket delas **inte**. En delning skulle
 påstå att någon annan tar över.
 
-**Står repliken inte först** i stycket lämnas det orört:
+**Står repliken inte först** i stycket bryts stycket i stället:
 
 ```
 Hon vände sig om. ”Vad gör du?” frågade hon.
 ```
+```
+Hon vände sig om.
 
-Pratminus måste inleda stycket, så det här kräver en styckebrytning — och
-var den ska gå är ett författarbeslut. Stycket hamnar i arbetslistan i
-stället.
+-- Vad gör du? frågade hon.
+```
+
+Pratminus måste inleda stycket, och här är det en **ny** talartur som
+börjar — till skillnad från fallet ovan, där samma tur fortsätter efter en
+beat. Berättandet blir ett eget stycke.
 
 ### Stycket är enheten, inte raden
 

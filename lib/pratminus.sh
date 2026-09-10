@@ -81,15 +81,21 @@ VILKA STYCKEN RÄKNAS
 
         ”Heter du Elof?” frågade Eva.       görs om (? innanför)
         ”Jag känner en Elof”, sa hon.       görs om (, utanför)
-        Han teg. ”Kanske det”, sa han.      görs INTE (citatet står inte först)
+        ”Vilket väder,” säger Sara.         görs om (, innanför)
+        Han teg. ”Kanske det”, sa han.      görs om (stycket bryts före repliken)
         ”Ett citat utan slut                görs INTE (inget avslutande tecken)
         ”Nomen libri” är arbetsnamnet.      görs INTE (varken eller: en titel)
         ”Han sa ”hej” till mig”, sa hon.    görs INTE (nästlade citat av samma sort)
 
-    De två sista är hela skälet till att regeln finns. Ett citat först på
-    raden är inte alltid en replik, och nästlade citat av samma sort går
+    De två sista är hela skälet till att regeln finns. Ett citat först i
+    stycket är inte alltid en replik, och nästlade citat av samma sort går
     inte att skilja åt på ett tryggt sätt. Hellre en replik du får göra om
     för hand än en mening som tyst blir förvanskad.
+
+    Kommatecknet räknas åt BÅDA hållen. Korrekt svenska sätter det utanför
+    citattecknet, men innanför är vanligt i praktiken, och när mönstret
+    dyker upp är det med säkerhet en replik. Båda ger samma resultat,
+    eftersom kommat hamnar rätt av sig självt när citattecknen faller bort.
 
     Raka ("), svenska (”), engelska (“) och vinkelcitattecken (» «) känns
     igen.
@@ -107,13 +113,17 @@ FLER ÄN EN REPLIK I STYCKET
     inre citattecknen faller bort, och stycket delas INTE. En delning
     skulle påstå att någon annan tar över.
 
-    STÅR REPLIKEN INTE FÖRST i stycket lämnas det orört:
+    STÅR REPLIKEN INTE FÖRST i stycket bryts stycket i stället:
 
         Hon vände sig om. ”Vad gör du?” frågade hon.
 
-    Pratminus måste inleda stycket, så det här kräver en styckebrytning —
-    och var den ska gå är ett författarbeslut. Stycket hamnar i
-    arbetslistan i stället.
+        Hon vände sig om.
+
+        -- Vad gör du? frågade hon.
+
+    Pratminus måste inleda stycket, och här är det en NY talartur som
+    börjar — till skillnad från fallet ovan, där samma tur fortsätter
+    efter en beat. Berättandet blir ett eget stycke.
 
 STYCKET ÄR ENHETEN, INTE RADEN
     Framåtläsningen går över radgränser men stannar ALLTID vid tomraden.
@@ -160,10 +170,8 @@ ARBETSLISTA
     inga problem TAS $RAPPORTNAMN BORT — en lista som ligger kvar tom läses
     som att det finns något ogjort.
 
-    Två saker hamnar där. Ett stycke med udda antal citattecken — ett
-    skrivfel, och vilket tecken som fattas går inte att gissa. Och ett
-    stycke där repliken inte står först, som behöver en styckebrytning du
-    får sätta själv. Skälet står på varje rad i listan.
+    Dit hamnar stycken med udda antal citattecken. Det är ett skrivfel,
+    och vilket tecken som fattas går inte att gissa — därför gissas inte.
 
     Filen är GENERERAD och skrivs över varje gång. Egna anteckningar i den
     överlever inte. Den läses aldrig in som källtext, så '$PROGNAME *.md'
@@ -388,12 +396,18 @@ konvertera() {
                 rest  = substr(rest, RSTART + RLENGTH)
 
                 # En replik slutar med skiljetecken innanför citattecknet,
-                # ELLER följs av ett kommatecken utanför det. Saknas båda är
-                # det ett äkta citat — en titel, ett citerat ord — och det
-                # ska behålla sina citattecken. I ett pratminusmanus är det
-                # de enda citattecken som blir kvar.
+                # ELLER följs av ett kommatecken utanför det. Kommatecknet
+                # räknas åt båda hållen, eftersom båda skrivsätten är i
+                # bruk och blandas ofta i samma manus:
+                #
+                #     ”Vilket väder,” säger Sara      komma innanför
+                #     ”Det blir bra”, säger Ulf       komma utanför
+                #
+                # Saknas allt detta är det ett äkta citat — en titel, ett
+                # citerat ord — och det ska behålla sina citattecken. I ett
+                # pratminusmanus är de de enda som blir kvar.
                 # rest är nu texten EFTER det avslutande citattecknet.
-                ar_replik = (inner ~ /(\.|!|\?|…)[ \t]*$/) ||
+                ar_replik = (inner ~ /(\.|!|\?|…|,)[ \t]*$/) ||
                             (substr(rest, 1, 1) == ",")
 
                 if (!ar_replik) {
@@ -406,9 +420,19 @@ konvertera() {
                     behandlat = 1
 
                     # Berättande FÖRE första repliken. Pratminus måste
-                    # inleda stycket, så det här kräver att stycket delas —
-                    # och var brytningen ska gå är ett författarbeslut.
-                    if (trimma(styck[sn] fore) != "") return "MITTI"
+                    # inleda stycket, så berättandet blir ett eget stycke
+                    # och repliken börjar nästa:
+                    #
+                    #     Han ser på henne och flinar. ”Känner du dig...?”
+                    #
+                    #     Han ser på henne och flinar.
+                    #
+                    #     -- Känner du dig...?
+                    #
+                    # Det är en NY talartur som inleds, till skillnad från
+                    # fallet längre ner där samma tur fortsätter.
+                    styck[sn] = styck[sn] fore
+                    if (trimma(styck[sn]) != "") { sn++; styck[sn] = "" }
 
                     styck[sn] = streck " " inner
                     antal++
@@ -457,19 +481,17 @@ konvertera() {
 
             resultat = bearbeta_stycke(joined, indrag)
 
-            if (resultat == "OBALANS" || resultat == "MITTI") {
+            if (resultat == "OBALANS") {
                 # Samlas till arbetslistan oavsett läge. Den som kör en
                 # skarp konvertering behöver veta vad som INTE gjordes.
-                if (resultat == "MITTI") mitti++
                 if (rapport != "")
-                    printf "%s\t%d\t%s\t%s\n", filnamn, start_rad, resultat, joined >> rapport
+                    printf "%s\t%d\t%s\n", filnamn, start_rad, joined >> rapport
 
                 if (lista) {
-                    # Hela stycket, inte bara första raden — det som fattas
-                    # kan sitta var som helst i det.
+                    # Hela stycket, inte bara första raden — det saknade
+                    # citattecknet kan sitta var som helst i det.
                     n_kvar++
-                    kvar_rad[n_kvar] = sprintf("  rad %d (%s):", start_rad,
-                        resultat == "MITTI" ? "replik mitt i stycket" : "citattecken saknas")
+                    kvar_rad[n_kvar] = sprintf("  rad %d:", start_rad)
                     for (i = 1; i <= n_rader; i++)
                         kvar_rad[n_kvar] = kvar_rad[n_kvar] sprintf("\n      %s", rader[i])
                 } else ut_orort()
@@ -529,10 +551,10 @@ konvertera() {
         END {
             spola_stycke()
             if (lista && n_kvar > 0) {
-                print "  -- lämnade orörda, kräver handpåläggning:"
+                print "  -- obalanserade citat, lämnas orörda:"
                 for (n = 1; n <= n_kvar; n++) print kvar_rad[n]
             }
-            print antal, (obalans + mitti) + 0 > "/dev/stderr"
+            print antal, obalans + 0 > "/dev/stderr"
         }
     ' "$1"
 }
@@ -670,13 +692,8 @@ if [ "$ingen_rapport" -eq 0 ]; then
             echo
             echo "Rätta i källfilen och kör \`$PROGNAME\` igen, så uppdateras listan."
             echo
-            while IFS=$'\t' read -r r_fil r_rad r_orsak r_text; do
-                if [ "$r_orsak" = "MITTI" ]; then
-                    skal="repliken står mitt i stycket — stycket behöver delas"
-                else
-                    skal="ett citattecken saknas, eller ett står för mycket"
-                fi
-                echo "- [ ] \`${r_fil#./}\` rad $r_rad — $skal"
+            while IFS=$'\t' read -r r_fil r_rad r_text; do
+                echo "- [ ] \`${r_fil#./}\` rad $r_rad — ett citattecken saknas, eller ett står för mycket"
                 echo
                 echo "  > $(korta "$r_text")"
                 echo
