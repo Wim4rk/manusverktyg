@@ -1,4 +1,4 @@
-# Pandoc – fusklapp för manusrendering
+# Pandoc - fusklapp för manusrendering
 
 I projektets grund ligger Pandoc. Det är ett program för att konvertera
 olika dokument från ett filformat till ett annat.
@@ -37,7 +37,7 @@ och utan lint och jämföra utdata.
 
 Lint är alltså till för **källfilen**, inte för boken. Kör den en gång
 innan du börjar redigera, så slipper du tänka på den mer. Den är
-idempotent — att köra om den ändrar ingenting.
+idempotent - att köra om den ändrar ingenting.
 
 Markdown läser enkla returer `\n` som ett mellanslag. Om du vill ha ett
 nytt stycke måste du lägga till en tom rad mellan: `\n\n`. Det kan vi
@@ -46,7 +46,7 @@ var ett nytt stycke börjar. `manus lint` ändrar detta åt dig.
 
 **Bara en tom rad avgör var ett stycke börjar.** Markdown har också en
 hård radbrytning: två blanksteg sist på en rad. Den formen stöds inte
-här — `manus lint` tar bort avslutande blanksteg. Ett osynligt tecken ska
+här - `manus lint` tar bort avslutande blanksteg. Ett osynligt tecken ska
 inte styra hur texten bryts, och två blanksteg efter varandra är nästan
 alltid ett skrivfel. Behöver du bevara exakta radbrytningar, som i en
 dikt, använd radblock: börja varje rad med `| `. Ett utskrivet `<br>`

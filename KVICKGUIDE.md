@@ -66,7 +66,7 @@ i den kommer med, i ordning. Formatmallen följer med precis som vanligt.
 
 ---
 
-## 3. Några utvalda filer — utan lista
+## 3. Några utvalda filer - utan lista
 
 Ska du skicka tre kapitel till en agent, eller ett utdrag till en tävling,
 räknar du upp filerna själv. Då används [Pandoc](https://pandoc.org/) direkt:
@@ -80,13 +80,13 @@ pandoc 001_forord.md 02_del_tva/010_kapitel.md \
 Ordningen du skriver filerna i är ordningen de hamnar i. Numreringen spelar
 ingen roll här.
 
-Den långa raden i mitten är formatmallen. Här måste du peka ut den själv —
+Den långa raden i mitten är formatmallen. Här måste du peka ut den själv -
 det är priset för att välja filerna för hand. Skriv `\` sist på raden för
 att fortsätta på nästa, som ovan.
 
 ---
 
-## 4. Några utvalda filer — med lista
+## 4. Några utvalda filer - med lista
 
 Ska samma urval byggas mer än en gång är det bökigt att skriva om raden
 varje gång. Lägg filerna i en lista i stället. Skapa en fil som heter
@@ -112,7 +112,7 @@ bort kapitel.
 Filnamn med mellanslag måste stå inom citattecken: `"mitt kapitel.md"`.
 
 
-Det betyder "allt annat är utanför med flit". Använd det för utdrag — inte
+Det betyder "allt annat är utanför med flit". Använd det för utdrag - inte
 när du bygger hela boken, för där vill du ha varningen kvar.
 
 ---
@@ -154,7 +154,7 @@ utan `--in-place`. Då skrivs en kopia bredvid varje fil i stället, med
 manus pratminus --in-place 01_del_ett/010_kapitel.md
 ```
 
-Utan filnamn tas hela boken, med samma regler som `manus bygg` — bara
+Utan filnamn tas hela boken, med samma regler som `manus bygg` - bara
 numrerade filer, bara numrerade mappar. Anteckningarna lämnas i fred.
 
 ### Det som lämnas orört
@@ -191,7 +191,7 @@ det inte att gissa vilket. De ställena samlas i en att-göra-lista,
 `CITAT_PROBLEM.md`, i mappen du står i:
 
 ```markdown
-- [ ] `02_urtid/010_kapitel.md` rad 85 — ett citattecken saknas, eller ett står för mycket
+- [ ] `02_urtid/010_kapitel.md` rad 85 - ett citattecken saknas, eller ett står för mycket
 
   > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
 ```
@@ -203,13 +203,13 @@ försvinner filen av sig själv.
 
 ## Om något går fel
 
-**"hittade inga filer som börjar med tre siffror"** — du står i fel mapp,
+**"hittade inga filer som börjar med tre siffror"** - du står i fel mapp,
 eller så saknar filnamnen sina tre siffror.
 
-**Fel kapitel kom med, eller i fel ordning** — kör `manus bygg --lista`
+**Fel kapitel kom med, eller i fel ordning** - kör `manus bygg --lista`
 och läs igenom. Ordningen beror på filnamnen.
 
-**Formatmallen kom inte med** — verktyget skriver ut vad det hittade innan
+**Formatmallen kom inte med** - verktyget skriver ut vad det hittade innan
 bygget. Står det ingen `docx-mall:` där, kontrollera att filen heter exakt
 `custom-reference.docx`.
 

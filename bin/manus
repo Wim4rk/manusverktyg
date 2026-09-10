@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# manus — verktyg för att gå från markdown till färdigt manus.
+# manus - verktyg för att gå från markdown till färdigt manus.
 #
 # FÖR SKÖNLITTERATUR. Allt här förutsätter en roman eller novell: kapitel i
 # läsordning, repliker och berättande. Facklitteraturens korsreferenser,
@@ -15,7 +15,7 @@ set -euo pipefail
 # gemensamma byggtillgångarna (stilmall, lua-filter) i assets/.
 
 # Följ symlänken hela vägen hem. Kommandot är tänkt att ligga som en länk i
-# ~/.local/bin, och då pekar $BASH_SOURCE på länken — inte på projektet där
+# ~/.local/bin, och då pekar $BASH_SOURCE på länken - inte på projektet där
 # lib/ och assets/ faktiskt finns.
 SELF_PATH="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
 MANUS_ROOT="$(cd "$(dirname "$SELF_PATH")/.." && pwd)"
@@ -25,7 +25,7 @@ readonly PROGNAME="manus"
 
 show_help() {
     cat <<EOF
-$PROGNAME — från markdown till färdigt manus. För skönlitteratur.
+$PROGNAME - från markdown till färdigt manus. För skönlitteratur.
 
 ANVÄNDNING
     $PROGNAME <kommando> [FLAGGOR]

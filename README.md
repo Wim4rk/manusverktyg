@@ -12,7 +12,7 @@ manus bygg       # kör Pandoc på alla numrerade dokument, i nummerordning
 manus pratminus  # ändrar citatrepliker till pratminus
 ```
 
-Allt — kommandon, hjälptexter och dokumentation — är på svenska.
+Allt - kommandon, hjälptexter och dokumentation - är på svenska.
 
 Verktygen förutsätter genomgående ett skönlitterärt manus: kapitel i
 läsordning, repliker och berättande De är _inte_ gjorda för facklitteratur,
@@ -41,11 +41,11 @@ Se nedan för fil- och katalognumreringar.
 
 Textordningen kan också styras med en yaml-fil. Använd flaggan
 `--manifest`. Verktyget varnar för varje fil som eventuellt fallit ur
-listan — se [Manifest](#manifest--när-numreringen-inte-passar).
+listan - se [Manifest](#manifest--när-numreringen-inte-passar).
 
 **Anteckningar är inte kapitel.**
 Ett manus samlar på sig research, makulatur och skisser. Sådant får inte
-råka hamna i boken. En onumrerad katalog hamnar därför utanför bygget — 
+råka hamna i boken. En onumrerad katalog hamnar därför utanför bygget - 
 men går att bygga för sig om det behövs. Samma med onumrerade filer.
 
 **Verktygen ska säga vad de gör.**
@@ -58,7 +58,7 @@ det att dela upp dokumentet så att varje mening får sin egen rad.
 Ligger ett stycke på en enda lång rad lyser hela stycket upp i en `git diff`
 så fort du rättar ett ord. Ligger varje mening på egen rad ser du exakt
 vilken mening som ändrades. Det är den enda ändring `manus lint` gör åt
-brödtexten, och den ändrar aldrig hur något renderas — en ensam radbrytning
+brödtexten, och den ändrar aldrig hur något renderas - en ensam radbrytning
 är en mjuk brytning i Markdown och betyder mellanslag. För nytt stycke
 krävs en tom rad emellan.
 
@@ -82,7 +82,7 @@ typsnitt behövs dessutom `xelatex` (`texlive-xetex`).
 
 ## Vilka filer tas med, och i vilken ordning
 
-Sökningen går **rekursivt** genom hela trädet under katalogen du står i —
+Sökningen går **rekursivt** genom hela trädet under katalogen du står i -
 men bara genom **numrerade** kataloger.
 
 |               | Krav              | Varför |
@@ -92,7 +92,7 @@ men bara genom **numrerade** kataloger.
 
 **En katalog som inte börjar med en siffra betyder att innehållet inte hör
 till bygget.** Anteckningar, makulatur och skisser hålls utanför även om
-filerna i dem är numrerade — vilket de gärna är, eftersom man vill kunna
+filerna i dem är numrerade - vilket de gärna är, eftersom man vill kunna
 bygga dem för sig.
 
 ```
@@ -131,7 +131,7 @@ sitt eget innehåll och delarna kommer i nummerordning:
 ```
 
 Numren måste ha lika många siffror inom varje nivå: `2_` sorterar **efter**
-`10_`, medan `02_` sorterar före. Kör alltid `manus bygg --lista` först —
+`10_`, medan `02_` sorterar före. Kör alltid `manus bygg --lista` först -
 fel kapitelordning är det enda felet som inte syns förrän någon annan läser
 boken.
 
@@ -156,16 +156,16 @@ manus pratminus --lista              # hela boken, bygg-reglerna
 manus pratminus skisser/utkast.md    # en utpekad fil, oavsett namn
 ```
 
-Pekar du ut en fil gäller precis den, oavsett vad den heter — ett utpekat
+Pekar du ut en fil gäller precis den, oavsett vad den heter - ett utpekat
 namn är ett medvetet val.
 
 Den är lika försiktig som `manus lint`: originalet rörs aldrig utan
 `--in-place`, och då sparas en `.bak`. Flaggan `--lista` visar varje stycke
-som skulle ändras, före och efter, utan att röra någon textfil — kör alltid
+som skulle ändras, före och efter, utan att röra någon textfil - kör alltid
 det först.
 
 Ett stycke görs om bara när alla tre stämmer: det **börjar** med ett
-citattecken, har ett avslutande, och ser ut som en replik — slutar med
+citattecken, har ett avslutande, och ser ut som en replik - slutar med
 skiljetecken innanför citatet eller följs av ett kommatecken utanför det.
 
 Kommatecknet räknas åt **båda** hållen. Korrekt svenska sätter det utanför
@@ -184,8 +184,8 @@ Den sista regeln finns för att ett citat först på raden inte alltid är en
 replik:
 
 ```
-”Nomen libri” är arbetsnamnet.        lämnas orörd — en titel, inte en replik
-”Han sa ”hej” till mig”, sa hon.      lämnas orörd — nästlade citat
+”Nomen libri” är arbetsnamnet.        lämnas orörd - en titel, inte en replik
+”Han sa ”hej” till mig”, sa hon.      lämnas orörd - nästlade citat
 ```
 
 Hellre en replik du får göra om för hand än en mening som tyst blir
@@ -202,7 +202,7 @@ replik, berättande, replik i ett och samma stycke:
 ```
 
 Pratminus markerar en **replikväxling**, inte varje yttrande. Samma person
-talar, det kommer ett berättande avsnitt, samma person fortsätter — allt är en
+talar, det kommer ett berättande avsnitt, samma person fortsätter - allt är en
 och samma rad. Därför sätts ett enda pratminus först i stycket, de inre
 citattecknen faller bort, och stycket delas **inte**. En delning skulle
 påstå att någon annan tar över.
@@ -219,7 +219,7 @@ Hon vände sig om.
 ```
 
 Pratminus måste inleda stycket, och här är det en **ny** talartur som
-börjar — till skillnad från fallet ovan, där samma tur fortsätter efter en
+börjar - till skillnad från fallet ovan, där samma tur fortsätter efter en
 beat. Berättandet blir ett eget stycke.
 
 ### Stycket är enheten, inte raden
@@ -266,14 +266,14 @@ Varje körning skriver en att-göra-lista, `CITAT_PROBLEM.md`, i katalogen
 1 stycke kvar. Senast genomsökt 2026-09-10.
 ```
 
-Listan gäller **körningen**, inte en katalog, och stämmer därför alltid —
+Listan gäller **körningen**, inte en katalog, och stämmer därför alltid -
 oavsett hur många filer som lästes. Står du i bokens rot och kör utan
 filargument får du hela bokens problem i en lista där; står du i ett kapitel
 får du kapitlets. Sökvägarna skrivs relativt samma katalog som listan ligger
 i.
 
 Rätta i källfilen och kör igen, så uppdateras listan. Hittar körningen inga
-problem **tas filen bort** — en lista som ligger kvar tom läses som att det
+problem **tas filen bort** - en lista som ligger kvar tom läses som att det
 finns något ogjort.
 
 Filen är genererad och skrivs över varje gång, så egna anteckningar i den
@@ -285,14 +285,14 @@ lista alls.
 
 > **Ordningen mot `manus lint`:** kör `pratminus` **först**. Lint delar en
 > replik som innehåller flera meningar över flera rader, och då sitter det
-> avslutande citattecknet inte längre på samma rad som det inledande —
+> avslutande citattecknet inte längre på samma rad som det inledande -
 > ingenting konverteras. Åt andra hållet går det bra.
 
 Förvalet är två bindestreck, eftersom Pandoc gör om `--` till ett riktigt
 tankstreck vid rendering och `manus lint` känner igen formen. Vill du ha
 tecknet direkt i källfilen ger `--tankstreck` det i stället.
 
-## Manifest — när numreringen inte passar
+## Manifest - när numreringen inte passar
 
 Numreringen är förvalet och räcker för en bok som läses rakt igenom. Men
 ibland ska något annat sammanställas: ett urval till en agent, ett utdrag
@@ -319,7 +319,7 @@ metadata:
     - makulatur.md
 ```
 
-`input-files` ger ordningen — ingen sortering sker. Filnamn med mellanslag,
+`input-files` ger ordningen - ingen sortering sker. Filnamn med mellanslag,
 `#` eller kolon måste citeras, annars läser YAML dem som något annat.
 
 Om du bara vill skriva in de filer du vill ha med så går det också. Lägg
@@ -354,7 +354,7 @@ med numrerade kataloger och filnamnen måste _alltid_ ha tre siffror för
 att komma med.
 
 Ett manifest har **två** källor, och dåvkan de glida isär. Ett kapitel du
-skrivit men glömt lägga till i listan byggs tyst bort — och det märks
+skrivit men glömt lägga till i listan byggs tyst bort - och det märks
 först när någon läser boken.
 
 Med manifrestet räknas därför varje byggbar fil i trädet som inte står i
@@ -366,7 +366,7 @@ VARNING: 1 fil(er) i trädet står varken i manifestet
              bortglömd.md
 ```
 
-Att tysta en fil kräver alltså att du skriver in den — du bestämmer, men
+Att tysta en fil kräver alltså att du skriver in den - du bestämmer, men
 glöm inget. Varningen är en garanti att ingenting försvinner tyst.
 
 ## Typsnitt som kanske inte finns
@@ -395,11 +395,11 @@ mainfontfallback:
 verkligen finns installerat, och skriver ut vilket det blev:
 
 ```
-Typsnitt: Garamond saknas — använder EB Garamond i stället.
+Typsnitt: Garamond saknas - använder EB Garamond i stället.
 ```
 
 Finns inget av dem tas `mainfont` bort helt och Pandoc bygger med sitt
-vanliga typsnitt — hellre en PDF med fel typsnitt än ingen PDF alls.
+vanliga typsnitt - hellre en PDF med fel typsnitt än ingen PDF alls.
 
 Kontrollen görs med `fc-list` och exakt familjenamn. `fc-match` duger inte:
 den svarar med ett ersättningstypsnitt och påstår därmed att allt finns.
@@ -419,7 +419,7 @@ Tre filer används automstiskt så länge de finns.
 | `vit-bakgrund.css`      | vit bakgrund                              | html, epub      |
 | `swedish-quotes.lua`    | svenska citattecken (`”`) på båda sidor   | alla format     |
 
-Pandocs förvalda stilmall sätter `html { background-color: #fdfdfd }` — inte
+Pandocs förvalda stilmall sätter `html { background-color: #fdfdfd }` - inte
 riktigt vitt, vilket läses som en grå ton i e-boksläsare. `vit-bakgrund.css`
 läggs efter pandocs egen och vinner. Den rör ingenting annat än bakgrunden;
 typsnitt och marginaler lämnas som de är.
@@ -435,7 +435,7 @@ standardfil. Lägg förslagsvis din egen uppdaterade stilmall i
 Filen används automatiskt. Du behöver inte göra något. Men två villkor gäller:
 
 1. Filen måste heta **exakt** `custom-reference.docx`
-2. Utformatet måste vara docx, odt eller pptx — Pandoc struntar tyst i
+2. Utformatet måste vara docx, odt eller pptx - Pandoc struntar tyst i
    stilmallen för PDF och EPUB, så samma kommando fungerar för alla format
 
 `manus bygg` skriver ut vad den hittade innan Pandoc kör, så du ser direkt
@@ -481,7 +481,7 @@ efter namnet `custom-reference.docx`, så varianter med andra namn *måste*
 pekas ut med `-r`. Anger du `-r` görs ingen automatisk sökning alls.
 
 `--utan-mall` stänger av automatiken helt. Ger du både `--utan-mall` och
-`-r` vinner `-r` — en uttrycklig flagga går före ett avstängt automatläge.
+`-r` vinner `-r` - en uttrycklig flagga går före ett avstängt automatläge.
 
 ### Skapa eller ändra en stilmall
 

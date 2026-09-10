@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# manus lint — normaliserar Markdown till ren, portabel Pandoc-Markdown.
+# manus lint - normaliserar Markdown till ren, portabel Pandoc-Markdown.
 #
 # Det enda skriptet gör som Pandoc inte gör: lägger varje mening på en egen rad.
 # Markdown läser en ensam radbrytning inuti ett stycke som ett mellanslag, så
-# det renderade resultatet blir exakt detsamma — men källfilen blir mycket
+# det renderade resultatet blir exakt detsamma - men källfilen blir mycket
 # lättare att revidera, och en diff pekar på den mening som ändrats i stället
 # för på hela stycket.
 #
 # Stycken följer vanliga Markdown-regler: rader som följer på varandra utan
 # tomrad hör till samma stycke, en tomrad börjar ett nytt. Det är det som gör
-# skriptet idempotent — kör man det två gånger fogas meningsraderna ihop till
+# skriptet idempotent - kör man det två gånger fogas meningsraderna ihop till
 # ett stycke igen och delas sedan på exakt samma ställen.
 #
 # Vad den gör, per fil:
@@ -24,7 +24,7 @@ set -euo pipefail
 #      och skiljer stycken åt med exakt en tomrad.
 #
 # Vad den medvetet INTE gör: bryter om eller radbryter texten på nytt, ändrar
-# ordval, eller tillämpar Pandocs egna formateringsregler — kör resultatet
+# ordval, eller tillämpar Pandocs egna formateringsregler - kör resultatet
 # genom `pandoc -f markdown -t markdown` själv om du vill ha även det.
 
 # Namnet som visas i hjälp och felmeddelanden. Sätts av "manus"-vägvisaren
@@ -45,7 +45,7 @@ mon tue wed thu fri sat sun mån tis ons tors fre lör sön"
 
 show_help() {
     cat <<EOF
-$PROGNAME — normaliserar Markdown för Pandoc.
+$PROGNAME - normaliserar Markdown för Pandoc.
 För skönlitteratur: brödtext och repliker, inte facklitteratur.
 
 ANVÄNDNING
@@ -68,7 +68,7 @@ FLAGGOR
     -i, --in-place   Skriver om varje fil på plats och sparar FIL.md.bak som
                      säkerhetskopia. Är filen redan normaliserad rörs den
                      inte alls, och en FIL.md.bak som redan finns skrivs
-                     aldrig över — den är från första körningen och är den
+                     aldrig över - den är från första körningen och är den
                      enda kvarvarande kopian av originalet.
     -c, --check      Kör dessutom resultatet genom pandoc för att kontrollera
                      att det går att tolka. Hoppas över med en varning om
@@ -90,7 +90,7 @@ VAD DEN ÄNDRAR
 
     Avslutande blanksteg tas bort.
         Det gäller brödtext, rubriker, listpunkter och blockcitat. Kodblock
-        undantas — där kan blanksteg betyda något.
+        undantas - där kan blanksteg betyda något.
 
         OBS ATT DET ÄR ETT MEDVETET VAL. Två blanksteg sist på en rad är i
         Markdown en HÅRD RADBRYTNING (<br>) inuti stycket. Den formen stöds
@@ -117,7 +117,7 @@ VAD DEN LÄMNAR I FRED
 SÅ HITTAS MENINGARNA
     En rad bryts efter . ! eller ? (plus eventuella avslutande citattecken
     eller parenteser, inklusive de svenska ” ’ » «) när nästa tecken är ett
-    blanktecken — UTOM när:
+    blanktecken - UTOM när:
       - ordet före är en känd förkortning (t.ex., bl.a., kl. och så vidare),
       - det står efter en ensam bokstav, alltså en initial som "J. R. R.",
       - nästa ord börjar med liten bokstav, vilket i regel betyder att
@@ -127,7 +127,7 @@ SÅ HITTAS MENINGARNA
     Den sista regeln är det som håller ihop anföringar. I
         ”Heter du Elof?” frågade Eva. ”Jag känner en Elof!”
     visar det gemena "frågade" att frågan ingår i en längre mening, så
-    brytningen hamnar efter "Eva." — där den hör hemma — och sedan igen före
+    brytningen hamnar efter "Eva." - där den hör hemma - och sedan igen före
     nästa replik.
 
     Tumregeln är medvetet försiktig: vid minsta tvekan lämnas raden hopfogad.
@@ -143,7 +143,7 @@ REPLIKER OCH PRATMINUS
 
     Skriv INTE pratminus som ett ensamt bindestreck. "- Vart är vi på väg?"
     är listpunkt-syntax i Markdown, och Pandoc renderar den som en punktlista
-    — inte som en replik. Skriptet låter den stå kvar orörd just därför: den
+    - inte som en replik. Skriptet låter den stå kvar orörd just därför: den
     är omöjlig att skilja från en riktig lista, och att gissa fel vore värre.
 
     Varje replik behöver ett eget stycke, alltså en tomrad emellan. Två
@@ -158,7 +158,7 @@ EXEMPEL
     Normalisera ett kapitel, skriver Kapitel05.pandoc.md bredvid:
         $PROGNAME Kapitel05.md
 
-    Hela boken till en byggkatalog, och sedan till EPUB — originalen i
+    Hela boken till en byggkatalog, och sedan till EPUB - originalen i
     skrivkatalogen rörs inte alls:
         $PROGNAME -o bygge MinBok/*.md
         pandoc bygge/*.md -o bok.epub
@@ -173,8 +173,8 @@ OM RADBRYTNINGAR
 
     Har du filer där varje stycke är en egen rad utan tomrad emellan är de
     raderna alltså ett och samma stycke, och de fogas ihop innan de delas upp
-    på nytt efter mening. Det ändrar inte hur texten renderas — den var redan
-    ett stycke — men källfilen ser annorlunda ut efteråt. Titta igenom
+    på nytt efter mening. Det ändrar inte hur texten renderas - den var redan
+    ett stycke - men källfilen ser annorlunda ut efteråt. Titta igenom
     resultatet, och behåll .bak-filen om du kör med --in-place.
 EOF
 }
@@ -254,7 +254,7 @@ normalize_body() {
         function is_list(r)    { return (r ~ /^[ \t]*([-*+]|[0-9]+[.)])[ \t]/) }
 
         # Drar ihop dubbla mellanslag inuti en rad, men lämnar indraget i
-        # början orört — det bär listnivåer och indragna block.
+        # början orört - det bär listnivåer och indragna block.
         function squeeze_spaces(rad,   indent) {
             match(rad, /^[ \t]*/)
             indent = substr(rad, 1, RLENGTH)
@@ -331,7 +331,7 @@ normalize_body() {
                 # meningen, så att ”Sa hon!” Han log. bryts EFTER citatet och
                 # inte före det. Matchas ett tecken i taget mot AVSLUTARE i
                 # stället för med index(), eftersom de svenska citattecknen
-                # består av flera byte och mawk räknar byte — slingan äter dem
+                # består av flera byte och mawk räknar byte - slingan äter dem
                 # då byte för byte och hamnar på samma ställe.
                 while (i < len_) {
                     next_ch = substr(text, i + 1, 1)
@@ -368,7 +368,7 @@ normalize_body() {
                 if (parts[i] != "") ABBR[parts[i]] = 1
 
             # Skiljetecken som avslutar en mening tillsammans med . ! eller ?.
-            # De svenska citattecknen ” ’ » « finns med — repliker är hela
+            # De svenska citattecknen ” ’ » « finns med - repliker är hela
             # skälet till att det spelar roll: utan dem skulle
             # ”Sa hon!” Han log. bli kvar på en enda rad.
             CLOSERS = "[\"\047)\\]}*_”’»«›‹]"
@@ -427,7 +427,7 @@ normalize_body() {
             }
 
             # Strukturrader står redan en per rad: skicka dem rakt igenom.
-            # Tabeller undantas från mellanslagsstädningen — där är
+            # Tabeller undantas från mellanslagsstädningen - där är
             # uppställningen till för att gå att läsa i källfilen.
             if (is_rule(rad)) { emit_paragraph(); emit_line(rad, "avdelare"); next }
             if (is_blockquote(rad))    { emit_paragraph(); emit_line(squeeze_spaces(rad), "citat"); next }
@@ -436,7 +436,7 @@ normalize_body() {
 
             # Vanlig brödtext: samla ihop stycket, dela det när det tar slut.
             # Dubbla mellanslag mitt i en mening eller efter en punkt är
-            # slinttryck och renderas ändå som ett enda — bort med dem. Bara
+            # slinttryck och renderas ändå som ett enda - bort med dem. Bara
             # brödtext städas; kodblock, tabeller, listor och citat gick redan
             # sin egen väg ovan och rörs inte.
             sub(/^[ \t]+/, "", rad)
@@ -486,7 +486,7 @@ process_file() {
             return 0
         fi
 
-        # Rör inte heller en .bak som redan finns — den är från första
+        # Rör inte heller en .bak som redan finns - den är från första
         # körningen och är den enda kvarvarande kopian av originalet.
         if [ -e "$input.bak" ]; then
             cp "$tmp_out" "$input"
@@ -505,7 +505,7 @@ process_file() {
         # Skriv aldrig över källan. Det skulle hända om --out-dir pekar på
         # den katalog filen redan ligger i, och då vore originalet borta.
         if [ "$(readlink -f "$out" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
-            echo "$PROGNAME: hoppar över $input — utdata skulle skriva över källan" >&2
+            echo "$PROGNAME: hoppar över $input - utdata skulle skriva över källan" >&2
             return 0
         fi
 

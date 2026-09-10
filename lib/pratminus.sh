@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# manus pratminus — gör om citatrepliker till pratminus.
+# manus pratminus - gör om citatrepliker till pratminus.
 #
 #     ”Heter du Elof?” frågade Eva.   ->   -- Heter du Elof? frågade Eva.
 #
@@ -12,12 +12,12 @@ set -euo pipefail
 #
 # Bara rader som BÖRJAR med ett citattecken räknas, och bara om det finns
 # ett avslutande citattecken på samma rad. Vid minsta tvekan lämnas raden
-# orörd — precis som i manus lint. En missad replik kostar en handgrepp,
+# orörd - precis som i manus lint. En missad replik kostar en handgrepp,
 # en felaktig konvertering kostar text.
 #
 # Verktyget arbetar på STYCKEN, inte på rader. Ett stycke är samma sak före
-# och efter manus lint — lint ombryter inom stycket och rör aldrig
-# tomraderna — så ordningen mellan verktygen spelar ingen roll. Redan
+# och efter manus lint - lint ombryter inom stycket och rör aldrig
+# tomraderna - så ordningen mellan verktygen spelar ingen roll. Redan
 # lintade filer fungerar lika bra som orörda.
 #
 # OBS om awk: de svenska citattecknen är flera byte, och mawk räknar byte.
@@ -28,7 +28,7 @@ readonly PROGNAME="${MANUS_COMMAND:-manus pratminus}"
 
 show_help() {
     cat <<EOF
-$PROGNAME — gör om citatrepliker till pratminus.
+$PROGNAME - gör om citatrepliker till pratminus.
 För skönlitteratur: dialog i en roman, inte citat i en fackbok.
 
 ANVÄNDNING
@@ -39,7 +39,7 @@ ANVÄNDNING
     Anteckningar, research och makulatur hålls därmed utanför, precis som
     de hålls utanför bygget.
 
-    Med FIL gäller precis de filerna, oavsett vad de heter — ett utpekat
+    Med FIL gäller precis de filerna, oavsett vad de heter - ett utpekat
     namn är ett medvetet val och går alltid att köra.
 
     Som förval läses varje FIL.md och en omgjord kopia skrivs bredvid den
@@ -59,7 +59,7 @@ FLAGGOR
     -i, --in-place   Skriver om varje fil på plats och sparar FIL.md.bak
                      som säkerhetskopia. Är filen redan omgjord rörs den
                      inte alls, och en FIL.md.bak som redan finns skrivs
-                     aldrig över — den är från första körningen och är den
+                     aldrig över - den är från första körningen och är den
                      enda kvarvarande kopian av originalet.
     -t, --tankstreck Skriver ett riktigt tankstreck (–) i stället för två
                      bindestreck. Se nedan om vilket du vill ha.
@@ -76,7 +76,7 @@ FLAGGOR
 VILKA STYCKEN RÄKNAS
     Ett stycke görs om bara när ALLA tre stämmer: det börjar med ett
     citattecken, har ett avslutande på samma rad, och ser ut som en replik
-    — alltså slutar med skiljetecken innanför citatet ELLER följs av ett
+    - alltså slutar med skiljetecken innanför citatet ELLER följs av ett
     kommatecken utanför det.
 
         ”Heter du Elof?” frågade Eva.       görs om (? innanför)
@@ -101,14 +101,14 @@ VILKA STYCKEN RÄKNAS
     igen.
 
 FLER ÄN EN REPLIK I STYCKET
-    Det vanligaste mönstret i svensk dialog är replik, berättande, replik —
+    Det vanligaste mönstret i svensk dialog är replik, berättande, replik -
     allt i ett stycke:
 
         ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
         -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 
     Pratminus markerar en REPLIKVÄXLING, inte varje yttrande. Samma person
-    talar, det kommer en berättande beat, samma person fortsätter — allt är
+    talar, det kommer en berättande beat, samma person fortsätter - allt är
     en och samma tur. Därför sätts ett enda pratminus först i stycket, de
     inre citattecknen faller bort, och stycket delas INTE. En delning
     skulle påstå att någon annan tar över.
@@ -122,7 +122,7 @@ FLER ÄN EN REPLIK I STYCKET
         -- Vad gör du? frågade hon.
 
     Pratminus måste inleda stycket, och här är det en NY talartur som
-    börjar — till skillnad från fallet ovan, där samma tur fortsätter
+    börjar - till skillnad från fallet ovan, där samma tur fortsätter
     efter en beat. Berättandet blir ett eget stycke.
 
 STYCKET ÄR ENHETEN, INTE RADEN
@@ -150,7 +150,7 @@ STYCKET ÄR ENHETEN, INTE RADEN
 ARBETSLISTA
     Varje körning skriver en att-göra-lista, $REPORT_NAME, i katalogen DÄR
     DU STÅR. Den gäller körningen, inte en katalog, och stämmer därför
-    alltid — oavsett hur många filer som lästes:
+    alltid - oavsett hur många filer som lästes:
 
         # Citatproblem
 
@@ -167,11 +167,11 @@ ARBETSLISTA
     hela bokens problem i en lista där.
 
     Rätta i källfilen och kör igen, så uppdateras listan. Hittar körningen
-    inga problem TAS $REPORT_NAME BORT — en lista som ligger kvar tom läses
+    inga problem TAS $REPORT_NAME BORT - en lista som ligger kvar tom läses
     som att det finns något ogjort.
 
     Dit hamnar stycken med udda antal citattecken. Det är ett skrivfel,
-    och vilket tecken som fattas går inte att gissa — därför gissas inte.
+    och vilket tecken som fattas går inte att gissa - därför gissas inte.
 
     Filen är GENERERAD och skrivs över varje gång. Egna anteckningar i den
     överlever inte. Den läses aldrig in som källtext, så '$PROGNAME *.md'
@@ -183,7 +183,7 @@ ARBETSLISTA
 VAD SOM LÄMNAS I FRED
     YAML-frontmatter högst upp i filen, kodblock (\`\`\` eller ~~~) och
     HTML-kommentarer (<!-- ... -->, även över flera rader) kopieras rakt
-    igenom. Citattecken inuti dem är inte repliker — och i anteckningar är
+    igenom. Citattecken inuti dem är inte repliker - och i anteckningar är
     de dessutom ofta obalanserade med flit.
 
     Rubriker, listpunkter, blockcitat, tabeller och avdelare står för sig
@@ -317,7 +317,7 @@ cleanup_report() { rm -f "$report_tmp"; }
 trap cleanup_report EXIT
 
 # ---------------------------------------------------------------------
-# Kärnan — arbetar på STYCKEN, inte på rader.
+# Kärnan - arbetar på STYCKEN, inte på rader.
 #
 # Ett stycke är samma sak före och efter manus lint: lint ombryter inom
 # stycket och rör aldrig tomraderna. Genom att arbeta på stycken blir det
@@ -325,7 +325,7 @@ trap cleanup_report EXIT
 # mellan verktygen slutar spela roll.
 #
 # Framåtläsningen stannar ALLTID vid tomraden. Ett stycke med udda antal
-# citattecken är obalanserat — ett saknat avslutande tecken — och lämnas
+# citattecken är obalanserat - ett saknat avslutande tecken - och lämnas
 # helt orört. Utan det taket skulle ett skrivfel svälja text ända fram
 # till nästa citattecken, kanske flera stycken bort.
 #
@@ -350,7 +350,7 @@ convert() {
         }
 
         # Fogar ihop två textbitar där ett citattecken just fallit bort.
-        # Saknas mellanslag i källan — ”...röst.”Vi tar det...” — skulle
+        # Saknas mellanslag i källan - ”...röst.”Vi tar det...” - skulle
         # orden annars växa ihop till "röst.Vi". Men ett skiljetecken ska
         # sitta kvar tätt intill: ”Det blir bra”, säger ... blir
         # "Det blir bra, säger", inte "Det blir bra , säger".
@@ -403,8 +403,8 @@ convert() {
                 #     ”Vilket väder,” säger Sara      komma innanför
                 #     ”Det blir bra”, säger Ulf       komma utanför
                 #
-                # Saknas allt detta är det ett äkta citat — en titel, ett
-                # citerat ord — och det ska behålla sina citattecken. I ett
+                # Saknas allt detta är det ett äkta citat - en titel, ett
+                # citerat ord - och det ska behålla sina citattecken. I ett
                 # pratminusmanus är de de enda som blir kvar.
                 # rest är nu texten EFTER det avslutande citattecknet.
                 is_speech = (inner ~ /(\.|!|\?|…|,)[ \t]*$/) ||
@@ -444,7 +444,7 @@ convert() {
                 # replikväxling, inte varje yttrande: samma person talar,
                 # det kommer en berättande beat, samma person fortsätter.
                 # Allt är en och samma tur. Citattecknen faller bort, men
-                # inget nytt pratminus sätts och stycket delas inte — en
+                # inget nytt pratminus sätts och stycket delas inte - en
                 # delning skulle påstå att någon annan tar över.
                 #
                 #   ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
@@ -474,7 +474,7 @@ convert() {
             indent = substr(lines[1], 1, RLENGTH)
 
             # Fog ihop raderna. En ensam radbrytning inuti ett stycke är en
-            # mjuk brytning i Markdown och betyder mellanslag — samma regel
+            # mjuk brytning i Markdown och betyder mellanslag - samma regel
             # som manus lint bygger på.
             joined = trim(lines[1])
             for (i = 2; i <= n_lines; i++) joined = joined " " trim(lines[i])
@@ -488,7 +488,7 @@ convert() {
                     printf "%s\t%d\t%s\n", filename, start_line, joined >> report
 
                 if (list_mode) {
-                    # Hela stycket, inte bara första raden — det saknade
+                    # Hela stycket, inte bara första raden - det saknade
                     # citattecknet kan sitta var som helst i det.
                     n_remaining++
                     remaining_lines[n_remaining] = sprintf("  rad %d:", start_line)
@@ -528,7 +528,7 @@ convert() {
         in_code { out($0); next }
 
         # HTML-kommentarer likaså. Där ligger arbetsanteckningar, och ett
-        # citerat ord i en anteckning är ingen replik — dessutom är citaten
+        # citerat ord i en anteckning är ingen replik - dessutom är citaten
         # där ofta obalanserade med flit.
         in_comment { out($0); if (/-->/) in_comment = 0; next }
         /<!--/ {
@@ -600,7 +600,7 @@ process_file() {
             return 0
         fi
 
-        # Rör inte heller en .bak som redan finns — den är från första
+        # Rör inte heller en .bak som redan finns - den är från första
         # körningen och är den enda kvarvarande kopian av originalet.
         if [ -e "$input.bak" ]; then
             cp "$tmp_out" "$input"
@@ -616,7 +616,7 @@ process_file() {
         # Skriv aldrig över källan. Det skulle hända om --out-dir pekar på
         # den katalog filen redan ligger i, och då vore originalet borta.
         if [ "$(readlink -f "$out" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
-            echo "$PROGNAME: hoppar över $input — utdata skulle skriva över källan" >&2
+            echo "$PROGNAME: hoppar över $input - utdata skulle skriva över källan" >&2
             return 0
         fi
 
@@ -653,7 +653,7 @@ done
 # boken måste få veta vad som INTE blev gjort, och var.
 #
 # Listan hamnar i katalogen DÄR KOMMANDOT KÖRS, som CITAT_PROBLEM.md. Den
-# gäller alltså körningen, inte en katalog — och därför stämmer den alltid,
+# gäller alltså körningen, inte en katalog - och därför stämmer den alltid,
 # oavsett hur många filer som lästes. En lista utlagd i varje berörd
 # katalog skulle i stället påstå sig gälla hela katalogen, och då måste man
 # veta om körningen täckte den. Det gör den här inte.
@@ -687,13 +687,13 @@ if [ "$no_report" -eq 0 ]; then
             echo "     Egna anteckningar här överlever inte nästa körning. -->"
             echo
             echo "Stycken där citattecknen inte går ihop: ett saknas, eller ett står"
-            echo "för mycket. De har lämnats **orörda** — vilket tecken som fattas går"
+            echo "för mycket. De har lämnats **orörda** - vilket tecken som fattas går"
             echo "inte att gissa."
             echo
             echo "Rätta i källfilen och kör \`$PROGNAME\` igen, så uppdateras listan."
             echo
             while IFS=$'\t' read -r r_file r_line r_text; do
-                echo "- [ ] \`${r_file#./}\` rad $r_line — ett citattecken saknas, eller ett står för mycket"
+                echo "- [ ] \`${r_file#./}\` rad $r_line - ett citattecken saknas, eller ett står för mycket"
                 echo
                 echo "  > $(truncate "$r_text")"
                 echo
@@ -714,6 +714,6 @@ if [ "$no_report" -eq 0 ]; then
         rm -f "$target"
         echo
         echo "ARBETSLISTA"
-        echo "    $target borttagen — inga problem kvar"
+        echo "    $target borttagen - inga problem kvar"
     fi
 fi
