@@ -341,6 +341,18 @@ konvertera() {
             return s
         }
 
+        # Fogar ihop två textbitar där ett citattecken just fallit bort.
+        # Saknas mellanslag i källan — ”...röst.”Vi tar det...” — skulle
+        # orden annars växa ihop till "röst.Vi". Men ett skiljetecken ska
+        # sitta kvar tätt intill: ”Det blir bra”, säger ... blir
+        # "Det blir bra, säger", inte "Det blir bra , säger".
+        function foga(a, b) {
+            if (a == "" || b == "") return a b
+            if (a ~ /[ \t]$/ || b ~ /^[ \t]/) return a b
+            if (b ~ /^(,|\.|;|:|!|\?|…|\)|”|’|»|«)/) return a b
+            return a " " b
+        }
+
         # Skriver stycket orört, precis som det stod i källan.
         function ut_orort(   i) {
             for (i = 1; i <= n_rader; i++) ut(rader[i])
@@ -413,11 +425,11 @@ konvertera() {
                 #
                 #   ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
                 #   -- Jag gjorde det. Han såg bort. Det var nödvändigt.
-                styck[sn] = styck[sn] fore inner
+                styck[sn] = foga(foga(styck[sn], fore), inner)
                 antal++
             }
 
-            styck[sn] = styck[sn] rest
+            styck[sn] = foga(styck[sn], rest)
 
             if (!resultat) return ""
 
