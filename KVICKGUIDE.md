@@ -86,7 +86,7 @@ Tillbaka en nivå igen: `cd ..`
 ## 3. Några utvalda filer — utan lista
 
 Ska du skicka tre kapitel till en agent, eller ett utdrag till en tävling,
-räknar du upp filerna själv. Då används Pandoc direkt:
+räknar du upp filerna själv. Då används [Pandoc](https://pandoc.org/) direkt:
 
 ```bash
 pandoc 001_forord.md 02_del_tva/010_kapitel.md \

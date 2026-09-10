@@ -1,9 +1,11 @@
 # Pandoc – fusklapp för manusrendering
 
-**För skönlitteratur.** Så här går du från markdown till läsbara format
-(EPUB/PDF) eller ett inlämningsklart romanmanus (DOCX). Pandoc gör jobbet;
-`manus` gör bara det Pandoc inte kan — hittar filerna, håller ordningen,
-och väljer typsnitt som faktiskt finns.
+**För skönlitteratur.** Så här går du från
+[markdown](https://pandoc.org/MANUAL.html#pandocs-markdown) till läsbara
+format (EPUB/PDF) eller ett inlämningsklart romanmanus (DOCX).
+[Pandoc](https://pandoc.org/) gör jobbet; `manus` gör bara det Pandoc inte
+kan — hittar filerna, håller ordningen, och väljer typsnitt som faktiskt
+finns.
 
 Allt nedan är valt för skönlitterär text. Pandoc kan mycket mer — register,
 källhänvisningar, korsreferenser — men det hör till facklitteratur och tas

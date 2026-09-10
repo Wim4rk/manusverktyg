@@ -2,8 +2,9 @@
 
 Om du bara vill komma igång finns en **[KVICKGUIDE.md](KVICKGUIDE.md)**.
 
-Projektet består av tre verktyg för vägen från markdown till färdigt manus,
-samlade under kommandot: `manus`.
+Projektet består av tre verktyg för vägen från
+[markdown](https://commonmark.org/help/) till färdigt manus, samlade under
+kommandot: `manus`.
 
 ```bash
 manus lint       # en mening per rad, städade mellanslag
@@ -18,8 +19,8 @@ läsordning, repliker och berättande De är _inte_ gjorda för facklitteratur,
 rapporter eller teknisk dokumentation —  där korsreferenser, 
 källhänvisningar, register och figurnumrering är av vikt.
 
-Slutstationen är Pandoc som sammanställer ett dokument i ett av tre
-format.
+Slutstationen är [Pandoc](https://pandoc.org/) som sammanställer ett dokument
+i ett av tre format.
 
 ## Projektets syfte
 
