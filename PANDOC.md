@@ -122,7 +122,8 @@ manus bygg -o MinBok.pdf -- \
   -V lang=sv \
   -V mainfont="Liberation Serif" \
   -V fontsize=12pt \
-  -V geometry:margin=1in \
+  -V papersize=a4 \
+  -V geometry:margin=25mm \
   --metadata title="Nomen libri" \
   --metadata author="Scriptor Sum"
 ```
@@ -134,6 +135,10 @@ Testat och verifierat i sin helhet. Några ord om varje del:
   flaggan används `pdflatex`, som klarar åäö men inte låter dig välja
   typsnitt. Alla tre motorerna (`pdflatex`, `xelatex`, `lualatex`) finns
   installerade.
+* `-V papersize=a4` behövs. Utan den blir sidan US Letter, som är
+  Pandocs förval - 216 x 279 mm i stället för 210 x 297.
+* `-V geometry:margin=25mm` sätter marginalen. Skriv måtten i mm; `in`
+  fungerar också men hör inte hemma i ett svenskt manus.
 * `-V lang=sv` ger svensk avstavning och översätter Pandocs egna rubriker -
   innehållsförteckningen får rubriken "Innehåll" i stället för "Contents".
 * `mainfont` måste vara ett typsnitt som verkligen finns på maskinen du
