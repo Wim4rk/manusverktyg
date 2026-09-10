@@ -141,9 +141,14 @@ VILKA FILER TAS MED
 
     DET SOM MÅSTE STÄMMA är att numren har LIKA MÅNGA SIFFROR inom samma
     katalog. Sorteringen är lexikografisk, inte numerisk, så 2_ hamnar
-    efter 10_ medan 02_ hamnar före. Blandas bredder varnar skriptet innan
-    Pandoc kör. Filer och kataloger jämförs var för sig, så tre siffror på
-    kapitlen och två på delarna är helt i sin ordning.
+    efter 10_ medan 02_ hamnar före.
+
+    Blandas bredder BYGGS INGENTING förrän det är rättat. Fel
+    kapitelordning är det enda felet som inte syns förrän någon läser
+    boken. --lista visar ändå listan, så felet går att se.
+
+    Filer och kataloger jämförs var för sig, så tre siffror på kapitlen och
+    två på delarna är helt i sin ordning.
 
     KATALOGER behöver också minst EN siffra först.
         01_del_ett/                 gås igenom
@@ -593,16 +598,26 @@ bredd_varning=$(
 
 if [ -n "$bredd_varning" ]; then
     echo
-    echo "VARNING: blandade siffbredder. Sorteringen är lexikografisk, inte"
-    echo "         numerisk, så 2_ hamnar EFTER 10_. Nollutfyll till samma"
-    echo "         bredd inom varje katalog:"
+    echo "BLANDADE SIFFBREDDER. Sorteringen är lexikografisk, inte numerisk,"
+    echo "så 2_ hamnar EFTER 10_. Nollutfyll till samma bredd inom varje"
+    echo "katalog:"
     while IFS= read -r rad; do
-        [ -n "$rad" ] && echo "             $rad"
+        [ -n "$rad" ] && echo "    $rad"
     done <<< "$bredd_varning"
 fi
 
 if [ "$list_only" -eq 1 ]; then
     exit 0
+fi
+
+# Ordningen ovan är fel, och fel kapitelordning är det enda felet som inte
+# syns förrän någon läser boken. Bygget stoppas hellre än ger en bok med
+# kapitlen om varandra. --lista visar ändå listan, så felet går att se.
+if [ -n "$bredd_varning" ]; then
+    echo >&2
+    echo "$PROGNAME: bygger inte förrän numreringen är enhetlig." >&2
+    echo "Kör '$PROGNAME --lista' för att se ordningen som den blir nu." >&2
+    exit 1
 fi
 
 command -v pandoc >/dev/null 2>&1 || usage_error "pandoc är inte installerat"

@@ -92,15 +92,21 @@ men bara genom **numrerade** kataloger.
 
 **Det som måste stämma är att numren har lika många siffror inom samma
 katalog.** Sorteringen är lexikografisk, inte numerisk, så `2_` hamnar
-efter `10_` medan `02_` hamnar före. Blandar du bredder varnar `manus bygg`
-innan Pandoc kör:
+efter `10_` medan `02_` hamnar före. Blandar du bredder **byggs ingenting**
+förrän du rättat det:
 
 ```
-VARNING: blandade siffbredder. Sorteringen är lexikografisk, inte
-         numerisk, så 2_ hamnar EFTER 10_. Nollutfyll till samma
-         bredd inom varje katalog:
-             katalogen du står i (filer): 10_kap.md, 1_kap.md
+BLANDADE SIFFBREDDER. Sorteringen är lexikografisk, inte numerisk,
+så 2_ hamnar EFTER 10_. Nollutfyll till samma bredd inom varje
+katalog:
+    katalogen du står i (filer): 10_kap.md, 1_kap.md
+
+manus bygg: bygger inte förrän numreringen är enhetlig.
 ```
+
+Fel kapitelordning är det enda felet som inte syns förrän någon läser
+boken, så bygget stoppas hellre än ger en bok med kapitlen om varandra.
+`manus bygg --lista` visar ändå listan, så du ser vad som blivit fel.
 
 Filer och kataloger jämförs var för sig, så tre siffror på kapitlen och två
 på delarna är helt i sin ordning.

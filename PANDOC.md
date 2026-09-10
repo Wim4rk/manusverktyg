@@ -26,7 +26,7 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 … `100_`) för att sorteringen (och globbningen nedan) ska ge rätt
 läsordning. `2_` sorterar annars efter `10_`. Det räcker att namnet börjar
 med en siffra; tre är ett förslag som ger luft att skjuta in kapitel.
-`manus bygg` varnar om bredderna blandas.
+`manus bygg` vägrar bygga om bredderna blandas.
 
 `manus lint` lägger varje mening på en egen rad och skiljer stycken åt med
 exakt en tomrad. Kör `manus lint --help` för hela beskrivningen.
