@@ -46,6 +46,7 @@ mon tue wed thu fri sat sun mån tis ons tors fre lör sön"
 visa_hjalp() {
     cat <<EOF
 $PROGNAME — normaliserar Markdown för Pandoc.
+För skönlitteratur: brödtext och repliker, inte facklitteratur.
 
 ANVÄNDNING
     $PROGNAME [FLAGGOR] FIL...

@@ -1,7 +1,7 @@
 # manusverktyg
 
-Två verktyg för vägen från markdown till färdigt manus, samlade under ett
-kommando: `manus`.
+**För skönlitteratur.** Tre verktyg för vägen från markdown till färdigt
+romanmanus, samlade under ett kommando: `manus`.
 
 ```bash
 manus lint       # en mening per rad, städade mellanslag
@@ -10,6 +10,12 @@ manus bygg       # kör Pandoc på alla numrerade dokument, i nummerordning
 ```
 
 Allt — kommandon, hjälptexter och dokumentation — är på svenska.
+
+Verktygen förutsätter genomgående ett skönlitterärt manus: kapitel i
+läsordning, repliker och berättande, en text som ska bli en bok. De är
+inte gjorda för facklitteratur, rapporter eller teknisk dokumentation —
+där är korsreferenser, källhänvisningar, register och figurnumrering det
+som betyder något, och sådant hanteras inte alls här.
 
 ## Vad projektet vill
 

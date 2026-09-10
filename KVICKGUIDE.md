@@ -1,7 +1,7 @@
 # Kvickguide
 
-De fyra saker man faktiskt gör. Ingen kodning krävs — du skriver ett
-kommando och trycker retur.
+**För skönlitteratur.** De fem saker man faktiskt gör med ett romanmanus.
+Ingen kodning krävs — du skriver ett kommando och trycker retur.
 
 ## Innan du börjar
 
@@ -150,6 +150,70 @@ metadata:
 
 Det betyder "allt annat är utanför med flit". Använd det för utdrag — inte
 när du bygger hela boken, för där vill du ha varningen kvar.
+
+---
+
+## 5. Byta citattecken mot pratminus
+
+Svensk skönlitteratur sätter oftast repliker med pratminus i stället för
+citattecken. Har du skrivit med citattecken går de att byta:
+
+```
+”Heter du Elof?” frågade Eva.   blir   -- Heter du Elof? frågade Eva.
+```
+
+**Titta först.** Det här ändrar din text, så börja alltid med att se efter
+vad som skulle hända:
+
+```bash
+manus pratminus --lista
+```
+
+Ingenting skrivs. Du får se varje stycke som skulle ändras, före och efter.
+
+**Gör om på riktigt** när du är nöjd med vad du såg:
+
+```bash
+manus pratminus --in-place
+```
+
+Varje fil som ändras får en säkerhetskopia bredvid sig, med `.bak` sist i
+namnet. Originalet finns alltså kvar.
+
+Vill du hellre titta på resultatet innan du släpper in det i manuset, kör
+utan `--in-place`. Då skrivs en kopia bredvid varje fil i stället, med
+`.pratminus` i namnet, och dina egna filer rörs inte alls.
+
+**Enstaka fil:** skriv filnamnet efter kommandot.
+
+```bash
+manus pratminus --in-place 01_del_ett/010_kapitel.md
+```
+
+Utan filnamn tas hela boken, med samma regler som `manus bygg` — bara
+numrerade filer, bara numrerade mappar. Anteckningarna lämnas i fred.
+
+### Det som lämnas åt dig
+
+Verktyget rör bara det som säkert är en replik. Är det en boktitel eller
+ett citerat ord lämnas det ifred:
+
+```
+”Nomen libri” är arbetsnamnet.     ← lämnas orörd, det är ingen replik
+```
+
+Och saknas ett citattecken någonstans lämnas hela stycket orört, eftersom
+det inte går att gissa vilket tecken som fattas. De ställena samlas i en
+att-göra-lista, `CITAT_PROBLEM.md`, i mappen du står i:
+
+```markdown
+- [ ] `02_urtid/010_kapitel.md` rad 85
+
+  > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
+```
+
+Rätta i din text och kör om, så uppdateras listan. När allt är fixat
+försvinner filen av sig själv.
 
 ---
 

@@ -3,6 +3,10 @@ set -euo pipefail
 
 # manus — verktyg för att gå från markdown till färdigt manus.
 #
+# FÖR SKÖNLITTERATUR. Allt här förutsätter en roman eller novell: kapitel i
+# läsordning, repliker och berättande. Facklitteraturens korsreferenser,
+# källhänvisningar och register hanteras inte alls.
+#
 #   manus lint       städar texten: en mening per rad, ett stycke per tomrad
 #   manus pratminus  gör om citatrepliker till pratminus
 #   manus bygg       kör Pandoc på alla numrerade dokument i katalogträdet
@@ -21,10 +25,14 @@ readonly PROGNAME="manus"
 
 visa_hjalp() {
     cat <<EOF
-$PROGNAME — från markdown till färdigt manus.
+$PROGNAME — från markdown till färdigt manus. För skönlitteratur.
 
 ANVÄNDNING
     $PROGNAME <kommando> [FLAGGOR]
+
+    Verktygen förutsätter ett skönlitterärt manus: kapitel i läsordning,
+    repliker och berättande. Facklitteraturens korsreferenser, register
+    och källhänvisningar hanteras inte.
 
 KOMMANDON
     lint     Städar texten. Lägger varje mening på en egen rad och skiljer

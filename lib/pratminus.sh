@@ -29,6 +29,7 @@ readonly PROGNAME="${MANUS_KOMMANDO:-manus pratminus}"
 visa_hjalp() {
     cat <<EOF
 $PROGNAME — gör om citatrepliker till pratminus.
+För skönlitteratur: dialog i en roman, inte citat i en fackbok.
 
 ANVÄNDNING
     $PROGNAME [FLAGGOR] [FIL...]

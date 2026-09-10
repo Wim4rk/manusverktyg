@@ -37,6 +37,7 @@ readonly TILLGANGAR="$ROT/assets"
 visa_hjalp() {
     cat <<EOF
 $PROGNAME — kör Pandoc på alla numrerade dokument i katalogträdet.
+För skönlitteratur: kapitel i läsordning, inte facklitteratur.
 
 ANVÄNDNING
     $PROGNAME [FLAGGOR] [-- PANDOC-FLAGGOR...]
