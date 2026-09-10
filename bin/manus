@@ -17,13 +17,13 @@ set -euo pipefail
 # Följ symlänken hela vägen hem. Kommandot är tänkt att ligga som en länk i
 # ~/.local/bin, och då pekar $BASH_SOURCE på länken — inte på projektet där
 # lib/ och assets/ faktiskt finns.
-SJALVA_FILEN="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
-MANUS_ROT="$(cd "$(dirname "$SJALVA_FILEN")/.." && pwd)"
-export MANUS_ROT
+SELF_PATH="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+MANUS_ROOT="$(cd "$(dirname "$SELF_PATH")/.." && pwd)"
+export MANUS_ROOT
 
 readonly PROGNAME="manus"
 
-visa_hjalp() {
+show_help() {
     cat <<EOF
 $PROGNAME — från markdown till färdigt manus. För skönlitteratur.
 
@@ -58,37 +58,37 @@ SNABBSTART
         $PROGNAME bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
 
 VAR SAKER LIGGER
-    Projektet:      $MANUS_ROT
-    Byggtillgångar: $MANUS_ROT/assets
+    Projektet:      $MANUS_ROOT
+    Byggtillgångar: $MANUS_ROOT/assets
 EOF
 }
 
 if [ $# -eq 0 ]; then
-    visa_hjalp
+    show_help
     exit 0
 fi
 
-kommando="$1"
+subcommand="$1"
 shift
 
-case "$kommando" in
+case "$subcommand" in
     lint)
-        MANUS_KOMMANDO="$PROGNAME lint" exec "$MANUS_ROT/lib/lint.sh" "$@"
+        MANUS_COMMAND="$PROGNAME lint" exec "$MANUS_ROOT/lib/lint.sh" "$@"
         ;;
     pratminus)
-        MANUS_KOMMANDO="$PROGNAME pratminus" exec "$MANUS_ROT/lib/pratminus.sh" "$@"
+        MANUS_COMMAND="$PROGNAME pratminus" exec "$MANUS_ROOT/lib/pratminus.sh" "$@"
         ;;
     bygg)
-        MANUS_KOMMANDO="$PROGNAME bygg" exec "$MANUS_ROT/lib/bygg.sh" "$@"
+        MANUS_COMMAND="$PROGNAME bygg" exec "$MANUS_ROOT/lib/bygg.sh" "$@"
         ;;
     hjälp|hjalp|-h|--help|help)
-        visa_hjalp
+        show_help
         ;;
     version|--version)
         echo "$PROGNAME (manusverktyg)"
         ;;
     *)
-        echo "$PROGNAME: okänt kommando '$kommando'" >&2
+        echo "$PROGNAME: okänt kommando '$subcommand'" >&2
         echo "Kör '$PROGNAME hjälp' för vilka som finns." >&2
         exit 1
         ;;

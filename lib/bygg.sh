@@ -21,20 +21,20 @@ set -euo pipefail
 
 # Namnet som visas i hjälp och felmeddelanden. Sätts av "manus"-vägvisaren
 # så texten stämmer med hur kommandot faktiskt anropas.
-readonly PROGNAME="${MANUS_KOMMANDO:-manus bygg}"
+readonly PROGNAME="${MANUS_COMMAND:-manus bygg}"
 
 # Följ symlänken hela vägen hem. Skriptet är tänkt att kunna ligga som en
 # länk i ~/.local/bin, och då pekar $BASH_SOURCE på länken - inte på
 # arkivet där manus lint och stilmallen faktiskt ligger.
-readonly SCRIPT_FIL="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
-readonly SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_FIL")" && pwd)"
+readonly SCRIPT_FILE="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+readonly SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_FILE")" && pwd)"
 
 # Projektets rot, satt av "manus". Körs bygg.sh direkt ligger roten en
 # nivå upp från lib/.
-readonly ROT="${MANUS_ROT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-readonly TILLGANGAR="$ROT/assets"
+readonly ROOT="${MANUS_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+readonly ASSETS_DIR="$ROOT/assets"
 
-visa_hjalp() {
+show_help() {
     cat <<EOF
 $PROGNAME - kör Pandoc på alla numrerade dokument i katalogträdet.
 
@@ -188,7 +188,7 @@ EXEMPEL
 EOF
 }
 
-fel_anvandning() {
+usage_error() {
     echo "$PROGNAME: $1" >&2
     echo "Kör '$PROGNAME --help' för mer information." >&2
     exit 1
@@ -215,7 +215,7 @@ fel_anvandning() {
 # Sant om typsnittsfamiljen finns installerad. fc-list ger exakt matchning;
 # fc-match duger inte - den svarar med ett ersättningstypsnitt och påstår
 # därmed att allt finns.
-typsnitt_finns() {
+font_exists() {
     [ -n "$1" ] || return 1
 
     # Inget grep -q här. Med -q avslutar grep vid första träffen, då får
@@ -223,17 +223,17 @@ typsnitt_finns() {
     # rapporterar fel - alltså "typsnittet saknas" trots att det finns.
     # -F och -- behövs för att typsnittsnamn med regex-tecken eller
     # inledande bindestreck inte ska tolkas som mönster eller flaggor.
-    local traffar
-    traffar=$(fc-list : family 2>/dev/null | tr ',' '\n' | grep -Fixc -- "$1" || true)
+    local hits
+    hits=$(fc-list : family 2>/dev/null | tr ',' '\n' | grep -Fixc -- "$1" || true)
 
-    [ "${traffar:-0}" -gt 0 ]
+    [ "${hits:-0}" -gt 0 ]
 }
 
 # Plockar ut mainfont och mainfontfallback ur ett YAML-block. Skriver ett
 # typsnitt per rad, i den ordning de ska provas.
-las_typsnitt() {
+read_fonts() {
     awk '
-        function skala(v) {
+        function unquote(v) {
             sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
             sub(/^["\047]/, "", v); sub(/["\047]$/, "", v)
             return v
@@ -242,31 +242,31 @@ las_typsnitt() {
         # Ett YAML-block börjar och slutar med --- (eller ... på slutet).
         # Slutstrecket måste kännas igen FÖRE listraderna nedan, annars
         # läses "---" som listpunkten "--" och blir ett typsnittsnamn.
-        NR == 1 && /^---[ \t]*$/ { i_block = 1; next }
-        i_block && /^(---|\.\.\.)[ \t]*$/ { exit }
+        NR == 1 && /^---[ \t]*$/ { in_block = 1; next }
+        in_block && /^(---|\.\.\.)[ \t]*$/ { exit }
 
         /^mainfont[ \t]*:/ {
-            v = skala(substr($0, index($0, ":") + 1))
+            v = unquote(substr($0, index($0, ":") + 1))
             if (v != "") print v
-            i_lista = 0
+            in_list = 0
             next
         }
         /^mainfontfallback[ \t]*:/ {
-            v = skala(substr($0, index($0, ":") + 1))
-            if (v != "") { print v; i_lista = 0 } else i_lista = 1
+            v = unquote(substr($0, index($0, ":") + 1))
+            if (v != "") { print v; in_list = 0 } else in_list = 1
             next
         }
 
         # En listpunkt måste ha något efter bindestrecket. Det utesluter
         # rader som bara består av streck.
-        i_lista && /^[ \t]*-[ \t]+[^ \t]/ {
+        in_list && /^[ \t]*-[ \t]+[^ \t]/ {
             v = $0
             sub(/^[ \t]*-[ \t]+/, "", v)
-            v = skala(v)
+            v = unquote(v)
             if (v != "") print v
             next
         }
-        i_lista && /^[^ \t-]/ { i_lista = 0 }
+        in_list && /^[^ \t-]/ { in_list = 0 }
     ' "$1"
 }
 
@@ -287,9 +287,9 @@ las_typsnitt() {
 # Plockar ut en lista ur manifestet. Nyckeln kan ligga på vilken nivå som
 # helst, så samma funktion klarar både input-files på toppnivån och
 # manus-uteslut nästlad under metadata:.
-las_manifest_lista() {
-    awk -v nyckel="$2" '
-        function skala(v,   forsta, slut) {
+read_manifest_list() {
+    awk -v key="$2" '
+        function unquote(v,   forsta, slut) {
             sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
 
             # Citerade värden tas ordagrant. Filnamn får innehålla både #
@@ -310,16 +310,16 @@ las_manifest_lista() {
             return v
         }
 
-        $0 ~ "^[ \t]*" nyckel "[ \t]*:[ \t]*(#.*)?$" { i_lista = 1; next }
+        $0 ~ "^[ \t]*" key "[ \t]*:[ \t]*(#.*)?$" { in_list = 1; next }
 
         # Nästa nyckel avslutar listan. Listrader börjar med bindestreck
         # och fastnar därför inte här.
-        i_lista && /^[ \t]*[^ \t#-][^:]*:/ { i_lista = 0 }
+        in_list && /^[ \t]*[^ \t#-][^:]*:/ { in_list = 0 }
 
-        i_lista && /^[ \t]*-[ \t]+/ {
+        in_list && /^[ \t]*-[ \t]+/ {
             v = $0
             sub(/^[ \t]*-[ \t]+/, "", v)
-            v = skala(v)
+            v = unquote(v)
             if (v != "") print v
         }
     ' "$1"
@@ -328,74 +328,74 @@ las_manifest_lista() {
 # Letar upp en byggtillgång (stilmall, lua-filter) i tur och ordning:
 # bokens egen katalog först, skriptets katalog sist. Så kan en enskild bok
 # ha sin egen stilmall utan att den allmänna behöver ändras.
-hitta_tillgang() {
-    local namn="$1" kandidat
-    for kandidat in "./$namn" "./bygg/$namn" "./.pandoc/$namn" "$TILLGANGAR/$namn"; do
-        if [ -f "$kandidat" ]; then
-            printf '%s' "$kandidat"
+find_asset() {
+    local asset_name="$1" candidate
+    for candidate in "./$asset_name" "./bygg/$asset_name" "./.pandoc/$asset_name" "$ASSETS_DIR/$asset_name"; do
+        if [ -f "$candidate" ]; then
+            printf '%s' "$candidate"
             return 0
         fi
     done
     return 1
 }
 
-separat=0
+separate=0
 lint=0
-bara_lista=0
-utan_mall=0
-mal=""
+list_only=0
+no_template=0
+target=""
 manifest=""
-referens=""
-css_fil=""
-lua_filter=()
-pandoc_flaggor=()
+reference=""
+css_file=""
+lua_filters=()
+pandoc_flags=()
 
 while [ $# -gt 0 ]; do
     case "$1" in
         -o|--ut)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver ett mål"
-            mal="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver ett mål"
+            target="$2"
             shift
             ;;
-        --ut=*)         mal="${1#*=}" ;;
+        --ut=*)         target="${1#*=}" ;;
         -m|--manifest)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en fil"
             manifest="$2"
             shift
             ;;
         --manifest=*)   manifest="${1#*=}" ;;
         -r|--referens)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
-            referens="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en fil"
+            reference="$2"
             shift
             ;;
-        --referens=*)   referens="${1#*=}" ;;
+        --referens=*)   reference="${1#*=}" ;;
         -f|--filter)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
-            lua_filter+=("$2")
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en fil"
+            lua_filters+=("$2")
             shift
             ;;
-        --filter=*)     lua_filter+=("${1#*=}") ;;
+        --filter=*)     lua_filters+=("${1#*=}") ;;
         --css)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
-            css_fil="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en fil"
+            css_file="$2"
             shift
             ;;
-        --css=*)        css_fil="${1#*=}" ;;
-        --utan-mall)    utan_mall=1 ;;
-        -s|--separat)   separat=1 ;;
+        --css=*)        css_file="${1#*=}" ;;
+        --utan-mall)    no_template=1 ;;
+        -s|--separat)   separate=1 ;;
         -l|--lint)      lint=1 ;;
-        -n|--lista)     bara_lista=1 ;;
-        -h|--help)      visa_hjalp; exit 0 ;;
-        --)             shift; pandoc_flaggor=("$@"); break ;;
-        -*)             fel_anvandning "okänd flagga '$1'" ;;
-        *)              fel_anvandning "oväntat argument '$1' (filerna hittas automatiskt)" ;;
+        -n|--lista)     list_only=1 ;;
+        -h|--help)      show_help; exit 0 ;;
+        --)             shift; pandoc_flags=("$@"); break ;;
+        -*)             usage_error "okänd flagga '$1'" ;;
+        *)              usage_error "oväntat argument '$1' (filerna hittas automatiskt)" ;;
     esac
     shift
 done
 
-if [ -z "$mal" ]; then
-    mal=$([ "$separat" -eq 1 ] && echo "ut" || echo "bok.epub")
+if [ -z "$target" ]; then
+    target=$([ "$separate" -eq 1 ] && echo "out" || echo "bok.epub")
 fi
 
 # ---------------------------------------------------------------------
@@ -416,23 +416,23 @@ fi
 # -name matchar mot NAMNET, inte sökvägen. -print0 och sort -z klarar
 # mellanslag och andra tecken i namnen.
 # ---------------------------------------------------------------------
-filer=()
-uteslut=()
+files=()
+excludes=()
 
 if [ -n "$manifest" ]; then
     # Manifestläge: ordningen står i filen, inte i filnamnen. Ingen
     # sortering - listan gäller som den är skriven.
-    [ -f "$manifest" ] || fel_anvandning "hittar inte manifestet '$manifest'"
+    [ -f "$manifest" ] || usage_error "hittar inte manifestet '$manifest'"
 
     while IFS= read -r rad; do
-        [ -n "$rad" ] && filer+=("$rad")
-    done < <(las_manifest_lista "$manifest" input-files)
+        [ -n "$rad" ] && files+=("$rad")
+    done < <(read_manifest_list "$manifest" input-files)
 
     while IFS= read -r rad; do
-        [ -n "$rad" ] && uteslut+=("$rad")
-    done < <(las_manifest_lista "$manifest" manus-uteslut)
+        [ -n "$rad" ] && excludes+=("$rad")
+    done < <(read_manifest_list "$manifest" manus-uteslut)
 
-    if [ "${#filer[@]}" -eq 0 ]; then
+    if [ "${#files[@]}" -eq 0 ]; then
         echo "$PROGNAME: '$manifest' innehåller ingen input-files-lista." >&2
         echo "Kör '$PROGNAME --help' för hur ett manifest ser ut." >&2
         exit 1
@@ -441,13 +441,13 @@ if [ -n "$manifest" ]; then
     # En fil som står i listan men inte finns är alltid ett fel. Pandoc
     # säger 'withBinaryFile: does not exist' och nämner inte varför; här
     # räknas alla upp på en gång, med den vanliga orsaken utskriven.
-    saknade_filer=()
-    for f in "${filer[@]}"; do
-        [ -f "$f" ] || saknade_filer+=("$f")
+    missing_files=()
+    for f in "${files[@]}"; do
+        [ -f "$f" ] || missing_files+=("$f")
     done
-    if [ "${#saknade_filer[@]}" -gt 0 ]; then
+    if [ "${#missing_files[@]}" -gt 0 ]; then
         echo "$PROGNAME: manifestet pekar på filer som inte finns:" >&2
-        for f in "${saknade_filer[@]}"; do
+        for f in "${missing_files[@]}"; do
             echo "    $f" >&2
         done
         echo >&2
@@ -458,7 +458,7 @@ if [ -n "$manifest" ]; then
     fi
 else
     while IFS= read -r -d '' f; do
-        filer+=("$f")
+        files+=("$f")
     done < <(
         find . \
             \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
@@ -469,7 +469,7 @@ else
             2>/dev/null | LC_ALL=C sort -z
     )
 
-    if [ "${#filer[@]}" -eq 0 ]; then
+    if [ "${#files[@]}" -eq 0 ]; then
         echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
         echo "Kör '$PROGNAME --help' för vilka namn som räknas." >&2
         exit 1
@@ -478,14 +478,14 @@ fi
 
 # Sökvägen relativt katalogen vi står i. Behövs även efter en lint, då
 # 'filer' pekar in i en temp-katalog i stället.
-rel_sokvagar=()
-for f in "${filer[@]}"; do
-    rel_sokvagar+=("${f#./}")
+rel_paths=()
+for f in "${files[@]}"; do
+    rel_paths+=("${f#./}")
 done
 
-echo "Hittade ${#filer[@]} dokument, i den här ordningen:"
+echo "Hittade ${#files[@]} dokument, i den här ordningen:"
 i=1
-for rel in "${rel_sokvagar[@]}"; do
+for rel in "${rel_paths[@]}"; do
     printf "  %3d. %s\n" "$i" "$rel"
     i=$((i + 1))
 done
@@ -502,20 +502,20 @@ done
 # skriva in den under manus-uteslut, alltså genom att bestämma sig.
 # ---------------------------------------------------------------------
 if [ -n "$manifest" ]; then
-    olistade=()
+    unlisted=()
     while IFS= read -r -d '' f; do
         rel="${f#./}"
 
-        for listad in "${rel_sokvagar[@]}"; do
-            [ "$listad" = "$rel" ] && continue 2
+        for listed in "${rel_paths[@]}"; do
+            [ "$listed" = "$rel" ] && continue 2
         done
 
-        for monster in ${uteslut+"${uteslut[@]}"}; do
+        for pattern in ${excludes+"${excludes[@]}"}; do
             # Omönstrat med flit: uteslutningarna får vara glob.
-            case "$rel" in $monster) continue 2 ;; esac
+            case "$rel" in $pattern) continue 2 ;; esac
         done
 
-        olistade+=("$rel")
+        unlisted+=("$rel")
     done < <(
         find . \
             \( -type d -name '.*' ! -name '.' -prune \) -o \
@@ -525,11 +525,11 @@ if [ -n "$manifest" ]; then
             2>/dev/null | LC_ALL=C sort -z
     )
 
-    if [ "${#olistade[@]}" -gt 0 ]; then
+    if [ "${#unlisted[@]}" -gt 0 ]; then
         echo
-        echo "VARNING: ${#olistade[@]} fil(er) i trädet står varken i manifestet"
+        echo "VARNING: ${#unlisted[@]} fil(er) i trädet står varken i manifestet"
         echo "         eller under manus-uteslut:"
-        for rel in "${olistade[@]}"; do
+        for rel in "${unlisted[@]}"; do
             echo "             $rel"
         done
         echo "         De byggs INTE. Lägg dem i input-files om de ska med,"
@@ -537,38 +537,38 @@ if [ -n "$manifest" ]; then
     fi
 fi
 
-if [ "$bara_lista" -eq 1 ]; then
+if [ "$list_only" -eq 1 ]; then
     exit 0
 fi
 
-command -v pandoc >/dev/null 2>&1 || fel_anvandning "pandoc är inte installerat"
+command -v pandoc >/dev/null 2>&1 || usage_error "pandoc är inte installerat"
 
 # ---------------------------------------------------------------------
 # Byggtillgångar: stilmall för DOCX och lua-filtret för svenska citattecken
 # ---------------------------------------------------------------------
-if [ "$utan_mall" -eq 0 ]; then
-    if [ -z "$referens" ]; then
-        referens="$(hitta_tillgang custom-reference.docx || true)"
+if [ "$no_template" -eq 0 ]; then
+    if [ -z "$reference" ]; then
+        reference="$(find_asset custom-reference.docx || true)"
     fi
-    if [ "${#lua_filter[@]}" -eq 0 ]; then
-        hittat_filter="$(hitta_tillgang swedish-quotes.lua || true)"
-        [ -n "$hittat_filter" ] && lua_filter=("$hittat_filter")
+    if [ "${#lua_filters[@]}" -eq 0 ]; then
+        found_filter="$(find_asset swedish-quotes.lua || true)"
+        [ -n "$found_filter" ] && lua_filters=("$found_filter")
     fi
-    if [ -z "$css_fil" ]; then
-        css_fil="$(hitta_tillgang vit-bakgrund.css || true)"
+    if [ -z "$css_file" ]; then
+        css_file="$(find_asset vit-bakgrund.css || true)"
     fi
 fi
 
 # --reference-doc påverkar bara docx/odt/pptx. Övriga format struntar i den
 # utan att klaga, så den kan skickas med oavsett utformat.
-tillgangar=()
-[ -n "$referens" ] && tillgangar+=(--reference-doc="$referens")
+asset_flags=()
+[ -n "$reference" ] && asset_flags+=(--reference-doc="$reference")
 
 # --css gäller HTML och EPUB. Övriga format struntar i den utan att klaga,
 # precis som med stilmallen, så den kan skickas med oavsett utformat.
-[ -n "$css_fil" ] && tillgangar+=(--css="$css_fil")
-for lf in ${lua_filter+"${lua_filter[@]}"}; do
-    tillgangar+=(--lua-filter="$lf")
+[ -n "$css_file" ] && asset_flags+=(--css="$css_file")
+for lf in ${lua_filters+"${lua_filters[@]}"}; do
+    asset_flags+=(--lua-filter="$lf")
 done
 
 # ---------------------------------------------------------------------
@@ -576,69 +576,69 @@ done
 #
 # Metadatan kan komma från tre håll. Den mest uttryckliga vinner.
 # ---------------------------------------------------------------------
-metadata_kalla=""
-for ((n = 0; n < ${#pandoc_flaggor[@]}; n++)); do
-    case "${pandoc_flaggor[n]}" in
-        --metadata-file)   metadata_kalla="${pandoc_flaggor[n+1]:-}" ;;
-        --metadata-file=*) metadata_kalla="${pandoc_flaggor[n]#--metadata-file=}" ;;
+metadata_source=""
+for ((n = 0; n < ${#pandoc_flags[@]}; n++)); do
+    case "${pandoc_flags[n]}" in
+        --metadata-file)   metadata_source="${pandoc_flags[n+1]:-}" ;;
+        --metadata-file=*) metadata_source="${pandoc_flags[n]#--metadata-file=}" ;;
     esac
 done
-if [ -z "$metadata_kalla" ] && [ -f "./metadata.yaml" ]; then
-    metadata_kalla="./metadata.yaml"
+if [ -z "$metadata_source" ] && [ -f "./metadata.yaml" ]; then
+    metadata_source="./metadata.yaml"
 fi
 # Sista positionen (vinner alltid): YAML-huvudet i det första dokumentet.
-if [ -z "$metadata_kalla" ]; then
-    metadata_kalla="${filer[0]}"
+if [ -z "$metadata_source" ]; then
+    metadata_source="${files[0]}"
 fi
 
-typsnitt_flaggor=()
-if [ -f "$metadata_kalla" ]; then
-    onskade=()
+font_flags=()
+if [ -f "$metadata_source" ]; then
+    wanted=()
     while IFS= read -r rad; do
-        [ -n "$rad" ] && onskade+=("$rad")
-    done < <(las_typsnitt "$metadata_kalla")
+        [ -n "$rad" ] && wanted+=("$rad")
+    done < <(read_fonts "$metadata_source")
 
-    if [ "${#onskade[@]}" -gt 0 ]; then
-        valt=""
-        saknade=()
-        for t in "${onskade[@]}"; do
-            if typsnitt_finns "$t"; then
-                valt="$t"
+    if [ "${#wanted[@]}" -gt 0 ]; then
+        chosen=""
+        missing=()
+        for t in "${wanted[@]}"; do
+            if font_exists "$t"; then
+                chosen="$t"
                 break
             fi
-            saknade+=("$t")
+            missing+=("$t")
         done
 
         echo
-        if [ -n "$valt" ]; then
-            if [ "${#saknade[@]}" -gt 0 ]; then
-                echo "Typsnitt: ${saknade[0]} saknas - använder $valt i stället."
-                for ((n = 1; n < ${#saknade[@]}; n++)); do
-                    echo "          (även ${saknade[n]} saknas)"
+        if [ -n "$chosen" ]; then
+            if [ "${#missing[@]}" -gt 0 ]; then
+                echo "Typsnitt: ${missing[0]} saknas - använder $chosen i stället."
+                for ((n = 1; n < ${#missing[@]}; n++)); do
+                    echo "          (även ${missing[n]} saknas)"
                 done
             else
-                echo "Typsnitt: $valt"
+                echo "Typsnitt: $chosen"
             fi
-            typsnitt_flaggor+=(-V "mainfont=$valt")
+            font_flags+=(-V "mainfont=$chosen")
         else
             echo "Typsnitt: inget av de önskade finns installerat -"
-            for t in "${saknade[@]}"; do
+            for t in "${missing[@]}"; do
                 echo "          $t saknas"
             done
             echo "          bygger med Pandocs vanliga typsnitt i stället."
             # Tomt värde tar bort mainfont ur mallen. Utan det här skulle
             # xelatex försöka bygga ett typsnitt som inte finns, och dö.
-            typsnitt_flaggor+=(-M "mainfont=")
+            font_flags+=(-M "mainfont=")
         fi
     fi
 fi
 
-if [ "${#tillgangar[@]}" -gt 0 ]; then
+if [ "${#asset_flags[@]}" -gt 0 ]; then
     echo
     echo "Använder:"
-    [ -n "$referens" ] && echo "  docx-mall:  $referens"
-    [ -n "$css_fil" ]  && echo "  css:        $css_fil"
-    for lf in ${lua_filter+"${lua_filter[@]}"}; do
+    [ -n "$reference" ] && echo "  docx-mall:  $reference"
+    [ -n "$css_file" ]  && echo "  css:        $css_file"
+    for lf in ${lua_filters+"${lua_filters[@]}"}; do
         echo "  lua-filter: $lf"
     done
 fi
@@ -651,24 +651,24 @@ fi
 # så varje fil lintas till sin EGNA relativa plats under temp-katalogen.
 # ---------------------------------------------------------------------
 tmp_lint=""
-rensa() { [ -n "$tmp_lint" ] && rm -rf "$tmp_lint"; }
-trap rensa EXIT
+cleanup() { [ -n "$tmp_lint" ] && rm -rf "$tmp_lint"; }
+trap cleanup EXIT
 
 if [ "$lint" -eq 1 ]; then
-    linter="$ROT/lib/lint.sh"
-    [ -x "$linter" ] || fel_anvandning "hittar inte lib/lint.sh i $ROT"
+    linter="$ROOT/lib/lint.sh"
+    [ -x "$linter" ] || usage_error "hittar inte lib/lint.sh i $ROOT"
 
     tmp_lint=$(mktemp -d)
     echo
     echo "Städar texten med manus lint..."
 
-    lintade=()
-    for ((n = 0; n < ${#filer[@]}; n++)); do
-        rel="${rel_sokvagar[n]}"
-        "$linter" -o "$tmp_lint/$(dirname "$rel")" "${filer[n]}" >/dev/null
-        lintade+=("$tmp_lint/$rel")
+    linted=()
+    for ((n = 0; n < ${#files[@]}; n++)); do
+        rel="${rel_paths[n]}"
+        "$linter" -o "$tmp_lint/$(dirname "$rel")" "${files[n]}" >/dev/null
+        linted+=("$tmp_lint/$rel")
     done
-    filer=("${lintade[@]}")
+    files=("${linted[@]}")
 fi
 
 echo
@@ -676,49 +676,49 @@ echo
 # ---------------------------------------------------------------------
 # Kör Pandoc
 # ---------------------------------------------------------------------
-if [ "$separat" -eq 1 ]; then
-    mkdir -p "$mal" || fel_anvandning "kunde inte skapa katalogen '$mal'"
+if [ "$separate" -eq 1 ]; then
+    mkdir -p "$target" || usage_error "kunde inte skapa katalogen '$target'"
 
     # Utformatet kan inte läsas ur ett katalognamn - ta det från
     # --pandoc-flaggorna om det står ett -t/--to där, annars pdf.
     format="pdf"
-    for ((n = 0; n < ${#pandoc_flaggor[@]}; n++)); do
-        case "${pandoc_flaggor[n]}" in
-            -t|--to) format="${pandoc_flaggor[n+1]:-pdf}" ;;
-            --to=*)  format="${pandoc_flaggor[n]#--to=}" ;;
+    for ((n = 0; n < ${#pandoc_flags[@]}; n++)); do
+        case "${pandoc_flags[n]}" in
+            -t|--to) format="${pandoc_flags[n+1]:-pdf}" ;;
+            --to=*)  format="${pandoc_flags[n]#--to=}" ;;
         esac
     done
 
     # Ett par format heter inte samma sak som sin vanliga filändelse.
-    andelse="$format"
+    extension="$format"
     case "$format" in
-        plain)          andelse="txt" ;;
-        markdown*|gfm)  andelse="md"  ;;
-        latex|beamer)   andelse="tex" ;;
+        plain)          extension="txt" ;;
+        markdown*|gfm)  extension="md"  ;;
+        latex|beamer)   extension="tex" ;;
     esac
 
-    antal=0
-    for ((n = 0; n < ${#filer[@]}; n++)); do
+    count=0
+    for ((n = 0; n < ${#files[@]}; n++)); do
         # Behåll katalogstrukturen. Två kapitel i olika delar av boken kan
         # mycket väl heta samma sak - bara basnamnet skulle låta det andra
         # skriva över det första, och räkningen nedan skulle ljuga om det.
-        rel="${rel_sokvagar[n]}"
-        ut="$mal/${rel%.*}.$andelse"
+        rel="${rel_paths[n]}"
+        out="$target/${rel%.*}.$extension"
 
-        mkdir -p "$(dirname "$ut")"
+        mkdir -p "$(dirname "$out")"
 
-        if pandoc "${filer[n]}" -o "$ut" ${tillgangar+"${tillgangar[@]}"} ${typsnitt_flaggor+"${typsnitt_flaggor[@]}"} ${pandoc_flaggor+"${pandoc_flaggor[@]}"}; then
-            echo "Skrev: $ut"
-            antal=$((antal + 1))
+        if pandoc "${files[n]}" -o "$out" ${asset_flags+"${asset_flags[@]}"} ${font_flags+"${font_flags[@]}"} ${pandoc_flags+"${pandoc_flags[@]}"}; then
+            echo "Skrev: $out"
+            count=$((count + 1))
         else
             echo "$PROGNAME: Pandoc misslyckades på $rel" >&2
         fi
     done
     echo
-    echo "Klart: $antal av ${#filer[@]} dokument renderade till $mal/"
+    echo "Klart: $count av ${#files[@]} dokument renderade till $target/"
 else
-    if pandoc "${filer[@]}" -o "$mal" ${tillgangar+"${tillgangar[@]}"} ${typsnitt_flaggor+"${typsnitt_flaggor[@]}"} ${pandoc_flaggor+"${pandoc_flaggor[@]}"}; then
-        echo "Klart: ${#filer[@]} dokument sammanslagna till $mal"
+    if pandoc "${files[@]}" -o "$target" ${asset_flags+"${asset_flags[@]}"} ${font_flags+"${font_flags[@]}"} ${pandoc_flags+"${pandoc_flags[@]}"}; then
+        echo "Klart: ${#files[@]} dokument sammanslagna till $target"
     else
         echo "$PROGNAME: Pandoc misslyckades." >&2
         exit 1

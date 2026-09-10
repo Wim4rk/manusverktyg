@@ -24,9 +24,9 @@ set -euo pipefail
 # En teckenklass [”“] matchar därför EN BYTE och slaktar tecknet. Därför
 # används alternation (”|“) genomgående här, aldrig klasser.
 
-readonly PROGNAME="${MANUS_KOMMANDO:-manus pratminus}"
+readonly PROGNAME="${MANUS_COMMAND:-manus pratminus}"
 
-visa_hjalp() {
+show_help() {
     cat <<EOF
 $PROGNAME — gör om citatrepliker till pratminus.
 För skönlitteratur: dialog i en roman, inte citat i en fackbok.
@@ -68,9 +68,9 @@ FLAGGOR
                      Arbetslistorna uppdateras ändå, se ARBETSLISTA.
     -R, --rapport FIL
                      Lägger arbetslistan på FIL i stället för i
-                     ./$RAPPORTNAMN.
+                     ./$REPORT_NAME.
     --ingen-rapport  Rör ingen arbetslista alls. Varken skriver eller tar
-                     bort $RAPPORTNAMN.
+                     bort $REPORT_NAME.
     -h, --help       Visar den här hjälpen och avslutar.
 
 VILKA STYCKEN RÄKNAS
@@ -148,7 +148,7 @@ STYCKET ÄR ENHETEN, INTE RADEN
     nästa citattecken, kanske flera stycken bort.
 
 ARBETSLISTA
-    Varje körning skriver en att-göra-lista, $RAPPORTNAMN, i katalogen DÄR
+    Varje körning skriver en att-göra-lista, $REPORT_NAME, i katalogen DÄR
     DU STÅR. Den gäller körningen, inte en katalog, och stämmer därför
     alltid — oavsett hur många filer som lästes:
 
@@ -167,7 +167,7 @@ ARBETSLISTA
     hela bokens problem i en lista där.
 
     Rätta i källfilen och kör igen, så uppdateras listan. Hittar körningen
-    inga problem TAS $RAPPORTNAMN BORT — en lista som ligger kvar tom läses
+    inga problem TAS $REPORT_NAME BORT — en lista som ligger kvar tom läses
     som att det finns något ogjort.
 
     Dit hamnar stycken med udda antal citattecken. Det är ett skrivfel,
@@ -218,7 +218,7 @@ EXEMPEL
 EOF
 }
 
-fel_anvandning() {
+usage_error() {
     echo "$PROGNAME: $1" >&2
     echo "Kör '$PROGNAME --help' för mer information." >&2
     exit 1
@@ -227,37 +227,37 @@ fel_anvandning() {
 # Namnet på arbetslistan som läggs i varje katalog med problem. Filen är
 # genererad och skrivs över vid varje körning, så den läses aldrig in som
 # källtext ens när man globbar *.md.
-readonly RAPPORTNAMN="CITAT_PROBLEM.md"
+readonly REPORT_NAME="CITAT_PROBLEM.md"
 
 in_place=0
-bara_lista=0
-tankstreck=0
-ingen_rapport=0
-ut_katalog=""
-rapport_fil=""
-filer=()
+list_only=0
+use_endash=0
+no_report=0
+out_dir=""
+report_file=""
+files=()
 
 while [ $# -gt 0 ]; do
     case "$1" in
         -i|--in-place)  in_place=1 ;;
-        -t|--tankstreck) tankstreck=1 ;;
-        -n|--lista)     bara_lista=1 ;;
-        -h|--help)      visa_hjalp; exit 0 ;;
+        -t|--tankstreck) use_endash=1 ;;
+        -n|--lista)     list_only=1 ;;
+        -h|--help)      show_help; exit 0 ;;
         -o|--out-dir)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en katalog"
-            ut_katalog="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en katalog"
+            out_dir="$2"
             shift
             ;;
-        --out-dir=*)    ut_katalog="${1#*=}" ;;
+        --out-dir=*)    out_dir="${1#*=}" ;;
         -R|--rapport)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en fil"
-            rapport_fil="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en fil"
+            report_file="$2"
             shift
             ;;
-        --rapport=*)    rapport_fil="${1#*=}" ;;
-        --ingen-rapport) ingen_rapport=1 ;;
-        -*)             fel_anvandning "okänd flagga '$1'" ;;
-        *)              filer+=("$1") ;;
+        --rapport=*)    report_file="${1#*=}" ;;
+        --ingen-rapport) no_report=1 ;;
+        -*)             usage_error "okänd flagga '$1'" ;;
+        *)              files+=("$1") ;;
     esac
     shift
 done
@@ -273,11 +273,11 @@ done
 # Med FIL-argument gäller precis de filerna, oavsett vad de heter. Ett
 # utpekat namn är ett medvetet val och ska alltid gå att köra.
 # ---------------------------------------------------------------------
-utpekade=1
-if [ "${#filer[@]}" -eq 0 ]; then
-    utpekade=0
+explicit=1
+if [ "${#files[@]}" -eq 0 ]; then
+    explicit=0
     while IFS= read -r -d '' f; do
-        filer+=("$f")
+        files+=("$f")
     done < <(
         find . \
             \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
@@ -288,33 +288,33 @@ if [ "${#filer[@]}" -eq 0 ]; then
             2>/dev/null | LC_ALL=C sort -z
     )
 
-    if [ "${#filer[@]}" -eq 0 ]; then
+    if [ "${#files[@]}" -eq 0 ]; then
         echo "$PROGNAME: hittade inga filer som börjar med tre siffror här." >&2
         echo "Ange en fil uttryckligen, eller kör '$PROGNAME --help'." >&2
         exit 1
     fi
 
-    echo "Hittade ${#filer[@]} dokument."
+    echo "Hittade ${#files[@]} dokument."
 fi
 
-if [ "$in_place" -eq 1 ] && [ -n "$ut_katalog" ]; then
-    fel_anvandning "--in-place och --out-dir går inte att kombinera"
+if [ "$in_place" -eq 1 ] && [ -n "$out_dir" ]; then
+    usage_error "--in-place och --out-dir går inte att kombinera"
 fi
 
-if [ -n "$ut_katalog" ] && ! mkdir -p "$ut_katalog"; then
-    fel_anvandning "kunde inte skapa katalogen '$ut_katalog'"
+if [ -n "$out_dir" ] && ! mkdir -p "$out_dir"; then
+    usage_error "kunde inte skapa katalogen '$out_dir'"
 fi
 
-streck="--"
-[ "$tankstreck" -eq 1 ] && streck="–"
+dash="--"
+[ "$use_endash" -eq 1 ] && dash="–"
 
 # Obalanserade stycken samlas här under körningen, ett per rad som
 # FIL <tab> RAD <tab> texten. Rapporten skrivs ut när alla filer är klara,
 # så arbetslistan står samlad i stället för utspridd mellan filnamnen.
-rapport_tmp=$(mktemp)
+report_tmp=$(mktemp)
 
-rensa_rapport() { rm -f "$rapport_tmp"; }
-trap rensa_rapport EXIT
+cleanup_report() { rm -f "$report_tmp"; }
+trap cleanup_report EXIT
 
 # ---------------------------------------------------------------------
 # Kärnan — arbetar på STYCKEN, inte på rader.
@@ -332,19 +332,19 @@ trap rensa_rapport EXIT
 # Antalet omgjorda repliker och antalet stycken som lämnats orörda skrivs på
 # stderr, så att texten på stdout inte blandas ihop med siffrorna.
 # ---------------------------------------------------------------------
-konvertera() {
-    awk -v streck="$streck" -v lista="${2:-0}" \
-        -v filnamn="$1" -v rapport="$rapport_tmp" '
+convert() {
+    awk -v dash="$dash" -v list_mode="${2:-0}" \
+        -v filename="$1" -v report="$report_tmp" '
         BEGIN {
             # Alternation, inte teckenklass. mawk räknar byte, och en klass
             # skulle matcha en ensam byte ur ett flerbytetecken.
-            CITAT = "(\"|”|“|»|«)"
-            antal = 0; obalans = 0; n_rader = 0
+            QUOTE = "(\"|”|“|»|«)"
+            count = 0; unbalanced = 0; n_lines = 0
         }
 
-        function ut(s) { if (!lista) print s }
+        function out(s) { if (!list_mode) print s }
 
-        function trimma(s) {
+        function trim(s) {
             sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s)
             return s
         }
@@ -354,7 +354,7 @@ konvertera() {
         # orden annars växa ihop till "röst.Vi". Men ett skiljetecken ska
         # sitta kvar tätt intill: ”Det blir bra”, säger ... blir
         # "Det blir bra, säger", inte "Det blir bra , säger".
-        function foga(a, b) {
+        function join_bit(a, b) {
             if (a == "" || b == "") return a b
             if (a ~ /[ \t]$/ || b ~ /^[ \t]/) return a b
             if (b ~ /^(,|\.|;|:|!|\?|…|\)|”|’|»|«)/) return a b
@@ -362,34 +362,34 @@ konvertera() {
         }
 
         # Skriver stycket orört, precis som det stod i källan.
-        function ut_orort(   i) {
-            for (i = 1; i <= n_rader; i++) ut(rader[i])
+        function emit_unchanged(   i) {
+            for (i = 1; i <= n_lines; i++) out(lines[i])
         }
 
         # Kärnan i kärnan. Går igenom ett hopfogat stycke från vänster,
         # spann för spann, och avgör för varje citatpar om det är en replik
         # eller ett äkta citat.
-        function bearbeta_stycke(text, indrag,
-                                 rest, fore, oc, inner, cc, efter, ar_replik,
-                                 sn, styck, i, n_citat, kopia, resultat,
-                                 behandlat) {
-            kopia = text
-            n_citat = gsub(CITAT, "&", kopia)
+        function process_para(text, indent,
+                                 rest, before, oc, inner, cc, efter, is_speech,
+                                 sn, chunks, i, n_quotes, copy_, result,
+                                 handled) {
+            copy_ = text
+            n_quotes = gsub(QUOTE, "&", copy_)
 
             # Inga citattecken alls, eller ett udda antal: rör ingenting.
-            if (n_citat == 0) return ""
-            if (n_citat % 2) { obalans++; return "OBALANS" }
+            if (n_quotes == 0) return ""
+            if (n_quotes % 2) { unbalanced++; return "OBALANS" }
 
-            sn = 1; styck[1] = ""
+            sn = 1; chunks[1] = ""
             rest = text
-            resultat = 0
+            result = 0
 
-            while (match(rest, CITAT)) {
-                fore = substr(rest, 1, RSTART - 1)
+            while (match(rest, QUOTE)) {
+                before = substr(rest, 1, RSTART - 1)
                 oc   = substr(rest, RSTART, RLENGTH)
                 rest = substr(rest, RSTART + RLENGTH)
 
-                if (!match(rest, CITAT)) { styck[sn] = styck[sn] fore oc; break }
+                if (!match(rest, QUOTE)) { chunks[sn] = chunks[sn] before oc; break }
 
                 inner = substr(rest, 1, RSTART - 1)
                 cc    = substr(rest, RSTART, RLENGTH)
@@ -407,17 +407,17 @@ konvertera() {
                 # citerat ord — och det ska behålla sina citattecken. I ett
                 # pratminusmanus är de de enda som blir kvar.
                 # rest är nu texten EFTER det avslutande citattecknet.
-                ar_replik = (inner ~ /(\.|!|\?|…|,)[ \t]*$/) ||
+                is_speech = (inner ~ /(\.|!|\?|…|,)[ \t]*$/) ||
                             (substr(rest, 1, 1) == ",")
 
-                if (!ar_replik) {
-                    styck[sn] = styck[sn] fore oc inner cc
-                    behandlat = 1
+                if (!is_speech) {
+                    chunks[sn] = chunks[sn] before oc inner cc
+                    handled = 1
                     continue
                 }
 
-                if (!behandlat) {
-                    behandlat = 1
+                if (!handled) {
+                    handled = 1
 
                     # Berättande FÖRE första repliken. Pratminus måste
                     # inleda stycket, så berättandet blir ett eget stycke
@@ -431,12 +431,12 @@ konvertera() {
                     #
                     # Det är en NY talartur som inleds, till skillnad från
                     # fallet längre ner där samma tur fortsätter.
-                    styck[sn] = styck[sn] fore
-                    if (trimma(styck[sn]) != "") { sn++; styck[sn] = "" }
+                    chunks[sn] = chunks[sn] before
+                    if (trim(chunks[sn]) != "") { sn++; chunks[sn] = "" }
 
-                    styck[sn] = streck " " inner
-                    antal++
-                    resultat = 1
+                    chunks[sn] = dash " " inner
+                    count++
+                    result = 1
                     continue
                 }
 
@@ -449,153 +449,153 @@ konvertera() {
                 #
                 #   ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
                 #   -- Jag gjorde det. Han såg bort. Det var nödvändigt.
-                styck[sn] = foga(foga(styck[sn], fore), inner)
-                antal++
+                chunks[sn] = join_bit(join_bit(chunks[sn], before), inner)
+                count++
             }
 
-            styck[sn] = foga(styck[sn], rest)
+            chunks[sn] = join_bit(chunks[sn], rest)
 
-            if (!resultat) return ""
+            if (!result) return ""
 
             # Bygg ihop styckena med tomrad emellan.
             text = ""
             for (i = 1; i <= sn; i++) {
-                if (trimma(styck[i]) == "") continue
+                if (trim(chunks[i]) == "") continue
                 if (text != "") text = text "\n\n"
-                text = text indrag trimma(styck[i])
+                text = text indent trim(chunks[i])
             }
             return text
         }
 
-        function spola_stycke(   i, joined, indrag, resultat) {
-            if (n_rader == 0) return
+        function flush_para(   i, joined, indent, result) {
+            if (n_lines == 0) return
 
-            match(rader[1], /^[ \t]*/)
-            indrag = substr(rader[1], 1, RLENGTH)
+            match(lines[1], /^[ \t]*/)
+            indent = substr(lines[1], 1, RLENGTH)
 
             # Fog ihop raderna. En ensam radbrytning inuti ett stycke är en
             # mjuk brytning i Markdown och betyder mellanslag — samma regel
             # som manus lint bygger på.
-            joined = trimma(rader[1])
-            for (i = 2; i <= n_rader; i++) joined = joined " " trimma(rader[i])
+            joined = trim(lines[1])
+            for (i = 2; i <= n_lines; i++) joined = joined " " trim(lines[i])
 
-            resultat = bearbeta_stycke(joined, indrag)
+            result = process_para(joined, indent)
 
-            if (resultat == "OBALANS") {
+            if (result == "OBALANS") {
                 # Samlas till arbetslistan oavsett läge. Den som kör en
                 # skarp konvertering behöver veta vad som INTE gjordes.
-                if (rapport != "")
-                    printf "%s\t%d\t%s\n", filnamn, start_rad, joined >> rapport
+                if (report != "")
+                    printf "%s\t%d\t%s\n", filename, start_line, joined >> report
 
-                if (lista) {
+                if (list_mode) {
                     # Hela stycket, inte bara första raden — det saknade
                     # citattecknet kan sitta var som helst i det.
-                    n_kvar++
-                    kvar_rad[n_kvar] = sprintf("  rad %d:", start_rad)
-                    for (i = 1; i <= n_rader; i++)
-                        kvar_rad[n_kvar] = kvar_rad[n_kvar] sprintf("\n      %s", rader[i])
-                } else ut_orort()
-            } else if (resultat == "") {
-                ut_orort()
-            } else if (lista) {
-                printf "  rad %d:\n", start_rad
-                for (i = 1; i <= n_rader; i++) printf "      %s\n", rader[i]
+                    n_remaining++
+                    remaining_lines[n_remaining] = sprintf("  rad %d:", start_line)
+                    for (i = 1; i <= n_lines; i++)
+                        remaining_lines[n_remaining] = remaining_lines[n_remaining] sprintf("\n      %s", lines[i])
+                } else emit_unchanged()
+            } else if (result == "") {
+                emit_unchanged()
+            } else if (list_mode) {
+                printf "  rad %d:\n", start_line
+                for (i = 1; i <= n_lines; i++) printf "      %s\n", lines[i]
                 printf "    →\n"
-                gsub(/\n/, "\n      ", resultat)
-                print "      " resultat
+                gsub(/\n/, "\n      ", result)
+                print "      " result
             } else {
-                print resultat
+                print result
             }
 
-            n_rader = 0
+            n_lines = 0
         }
 
-        function samla(rad) {
-            if (n_rader == 0) start_rad = FNR
-            rader[++n_rader] = rad
+        function collect(rad) {
+            if (n_lines == 0) start_line = FNR
+            lines[++n_lines] = rad
         }
 
         # YAML-frontmatter högst upp lämnas orört.
-        NR == 1 && /^---[ \t]*$/ { i_fm = 1; ut($0); next }
-        i_fm {
-            ut($0)
-            if (/^(---|\.\.\.)[ \t]*$/) i_fm = 0
+        NR == 1 && /^---[ \t]*$/ { in_fm = 1; out($0); next }
+        in_fm {
+            out($0)
+            if (/^(---|\.\.\.)[ \t]*$/) in_fm = 0
             next
         }
 
         # Kodblock lämnas orörda. Citattecken i dem är inte repliker.
-        /^[ \t]*(```|~~~)/ { spola_stycke(); i_kod = !i_kod; ut($0); next }
-        i_kod { ut($0); next }
+        /^[ \t]*(```|~~~)/ { flush_para(); in_code = !in_code; out($0); next }
+        in_code { out($0); next }
 
         # HTML-kommentarer likaså. Där ligger arbetsanteckningar, och ett
         # citerat ord i en anteckning är ingen replik — dessutom är citaten
         # där ofta obalanserade med flit.
-        i_kommentar { ut($0); if (/-->/) i_kommentar = 0; next }
+        in_comment { out($0); if (/-->/) in_comment = 0; next }
         /<!--/ {
-            spola_stycke()
-            ut($0)
-            if (!/-->/) i_kommentar = 1
+            flush_para()
+            out($0)
+            if (!/-->/) in_comment = 1
             next
         }
 
         # Tomraden är styckegränsen, och taket för all framåtläsning.
-        /^[ \t]*$/ { spola_stycke(); ut($0); next }
+        /^[ \t]*$/ { flush_para(); out($0); next }
 
         # Strukturrader står för sig själva och fogas aldrig ihop med
         # brödtext: rubriker, listpunkter, blockcitat, tabeller, avdelare.
         /^[ \t]*(#+[ \t]|>|([-*+]|[0-9]+[.)])[ \t]|\|)/ ||
-        /^[ \t]*([-*_][ \t]*){3,}$/ { spola_stycke(); ut($0); next }
+        /^[ \t]*([-*_][ \t]*){3,}$/ { flush_para(); out($0); next }
 
-        { samla($0) }
+        { collect($0) }
 
         END {
-            spola_stycke()
-            if (lista && n_kvar > 0) {
+            flush_para()
+            if (list_mode && n_remaining > 0) {
                 print "  -- obalanserade citat, lämnas orörda:"
-                for (n = 1; n <= n_kvar; n++) print kvar_rad[n]
+                for (n = 1; n <= n_remaining; n++) print remaining_lines[n]
             }
-            print antal, obalans + 0 > "/dev/stderr"
+            print count, unbalanced + 0 > "/dev/stderr"
         }
     ' "$1"
 }
 
 # Visar vilka rader som skulle ändras, utan att skriva någon fil.
 # Antalet kommer på stderr och fångas separat av anroparen.
-forhandsvisa() {
-    konvertera "$1" 1
+preview() {
+    convert "$1" 1
 }
 
-behandla_en_fil() {
+process_file() {
     local input="$1"
-    local tmp_ut antal flera
+    local tmp_out count others
 
-    if [ "$bara_lista" -eq 1 ]; then
-        local tmp_rader
-        tmp_rader=$(mktemp)
-        read -r antal flera < <(forhandsvisa "$input" 2>&1 >"$tmp_rader")
-        if [ "${antal:-0}" -gt 0 ] || [ "${flera:-0}" -gt 0 ]; then
-            if [ "${flera:-0}" -gt 0 ]; then
-                echo "$input ($antal repliker, $flera kvar åt dig):"
+    if [ "$list_only" -eq 1 ]; then
+        local tmp_lines
+        tmp_lines=$(mktemp)
+        read -r count others < <(preview "$input" 2>&1 >"$tmp_lines")
+        if [ "${count:-0}" -gt 0 ] || [ "${others:-0}" -gt 0 ]; then
+            if [ "${others:-0}" -gt 0 ]; then
+                echo "$input ($count repliker, $others kvar åt dig):"
             else
-                echo "$input ($antal repliker):"
+                echo "$input ($count repliker):"
             fi
-            cat "$tmp_rader"
+            cat "$tmp_lines"
         else
             echo "$input: inga repliker att göra om"
         fi
-        rm -f "$tmp_rader"
+        rm -f "$tmp_lines"
         return 0
     fi
 
-    tmp_ut=$(mktemp)
-    trap 'rm -f "$tmp_ut"' RETURN
+    tmp_out=$(mktemp)
+    trap 'rm -f "$tmp_out"' RETURN
 
-    read -r antal flera < <(konvertera "$input" 2>&1 >"$tmp_ut")
+    read -r count others < <(convert "$input" 2>&1 >"$tmp_out")
 
     if [ "$in_place" -eq 1 ]; then
         # Är filen redan omgjord händer ingenting alls. Annars hade en andra
         # körning skrivit över säkerhetskopian med den redan omgjorda texten.
-        if cmp -s "$input" "$tmp_ut"; then
+        if cmp -s "$input" "$tmp_out"; then
             echo "Oförändrad: $input"
             return 0
         fi
@@ -603,33 +603,33 @@ behandla_en_fil() {
         # Rör inte heller en .bak som redan finns — den är från första
         # körningen och är den enda kvarvarande kopian av originalet.
         if [ -e "$input.bak" ]; then
-            cp "$tmp_ut" "$input"
-            echo "Uppdaterad: $input ($antal repliker, $flera kvar åt dig, befintlig $input.bak lämnad orörd)"
+            cp "$tmp_out" "$input"
+            echo "Uppdaterad: $input ($count repliker, $others kvar åt dig, befintlig $input.bak lämnad orörd)"
         else
             cp "$input" "$input.bak"
-            cp "$tmp_ut" "$input"
-            echo "Uppdaterad: $input ($antal repliker, $flera kvar åt dig, säkerhetskopia: $input.bak)"
+            cp "$tmp_out" "$input"
+            echo "Uppdaterad: $input ($count repliker, $others kvar åt dig, säkerhetskopia: $input.bak)"
         fi
-    elif [ -n "$ut_katalog" ]; then
-        local ut="$ut_katalog/$(basename "$input")"
+    elif [ -n "$out_dir" ]; then
+        local out="$out_dir/$(basename "$input")"
 
         # Skriv aldrig över källan. Det skulle hända om --out-dir pekar på
         # den katalog filen redan ligger i, och då vore originalet borta.
-        if [ "$(readlink -f "$ut" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
+        if [ "$(readlink -f "$out" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
             echo "$PROGNAME: hoppar över $input — utdata skulle skriva över källan" >&2
             return 0
         fi
 
-        cp "$tmp_ut" "$ut"
-        echo "Skrev: $ut ($antal repliker)"
+        cp "$tmp_out" "$out"
+        echo "Skrev: $out ($count repliker)"
     else
-        local ut="${input%.md}.pratminus.md"
-        cp "$tmp_ut" "$ut"
-        echo "Skrev: $ut ($antal repliker)"
+        local out="${input%.md}.pratminus.md"
+        cp "$tmp_out" "$out"
+        echo "Skrev: $out ($count repliker)"
     fi
 }
 
-for f in "${filer[@]}"; do
+for f in "${files[@]}"; do
     if [ ! -f "$f" ]; then
         echo "$PROGNAME: hoppar över (inte en fil): $f" >&2
         continue
@@ -637,11 +637,11 @@ for f in "${filer[@]}"; do
 
     # Den egna arbetslistan är genererad text, inte manus. Utan det här
     # skulle 'pratminus *.md' läsa in sin egen rapport.
-    if [ "$(basename "$f")" = "$RAPPORTNAMN" ]; then
+    if [ "$(basename "$f")" = "$REPORT_NAME" ]; then
         continue
     fi
 
-    behandla_en_fil "$f"
+    process_file "$f"
 done
 
 # ---------------------------------------------------------------------
@@ -665,7 +665,7 @@ done
 # Ett stycke utan tomrader omkring sig kan vara ett helt kapitel. Det som
 # är användbart i listan är fil och radnummer; texten är där för att känna
 # igen stället, inte för att läsas i sin helhet.
-korta() {
+truncate() {
     if [ "${#1}" -gt 240 ]; then
         printf '%s…' "${1:0:240}"
     else
@@ -673,12 +673,12 @@ korta() {
     fi
 }
 
-if [ "$ingen_rapport" -eq 0 ]; then
-    mal="${rapport_fil:-./$RAPPORTNAMN}"
+if [ "$no_report" -eq 0 ]; then
+    target="${report_file:-./$REPORT_NAME}"
 
-    if [ -s "$rapport_tmp" ]; then
-        antal_kvar=$(wc -l < "$rapport_tmp")
-        [ "$antal_kvar" -eq 1 ] && ord="stycke" || ord="stycken"
+    if [ -s "$report_tmp" ]; then
+        remaining=$(wc -l < "$report_tmp")
+        [ "$remaining" -eq 1 ] && word="stycke" || word="stycken"
 
         {
             echo "# Citatproblem"
@@ -692,28 +692,28 @@ if [ "$ingen_rapport" -eq 0 ]; then
             echo
             echo "Rätta i källfilen och kör \`$PROGNAME\` igen, så uppdateras listan."
             echo
-            while IFS=$'\t' read -r r_fil r_rad r_text; do
-                echo "- [ ] \`${r_fil#./}\` rad $r_rad — ett citattecken saknas, eller ett står för mycket"
+            while IFS=$'\t' read -r r_file r_line r_text; do
+                echo "- [ ] \`${r_file#./}\` rad $r_line — ett citattecken saknas, eller ett står för mycket"
                 echo
-                echo "  > $(korta "$r_text")"
+                echo "  > $(truncate "$r_text")"
                 echo
-            done < "$rapport_tmp"
+            done < "$report_tmp"
             echo "---"
             echo
-            echo "$antal_kvar $ord kvar. Senast genomsökt $(date +%F)."
-        } > "$mal"
+            echo "$remaining $word kvar. Senast genomsökt $(date +%F)."
+        } > "$target"
 
         echo
         echo "ARBETSLISTA"
-        echo "    $mal ($antal_kvar $ord kvar)"
+        echo "    $target ($remaining $word kvar)"
 
-    elif [ -f "$mal" ]; then
+    elif [ -f "$target" ]; then
         # Körningen hittade inga problem, och listan gäller körningen. Då
         # är den inaktuell. En lista som ligger kvar tom läses som att det
         # finns något ogjort.
-        rm -f "$mal"
+        rm -f "$target"
         echo
         echo "ARBETSLISTA"
-        echo "    $mal borttagen — inga problem kvar"
+        echo "    $target borttagen — inga problem kvar"
     fi
 fi

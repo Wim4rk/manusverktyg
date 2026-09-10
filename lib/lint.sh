@@ -29,12 +29,12 @@ set -euo pipefail
 
 # Namnet som visas i hjälp och felmeddelanden. Sätts av "manus"-vägvisaren
 # så texten stämmer med hur kommandot faktiskt anropas.
-readonly PROGNAME="${MANUS_KOMMANDO:-manus lint}"
+readonly PROGNAME="${MANUS_COMMAND:-manus lint}"
 
 # Ord som slutar på punkt utan att avsluta en mening. Jämförs gemena, så de
 # behöver bara stå med en gång. Delaren vägrar dessutom bryta efter en ensam
 # bokstav, vilket täcker initialer som "J. R. R. Tolkien" utan att de räknas upp.
-readonly FORKORTNINGAR="\
+readonly ABBREVIATIONS="\
 t.ex ex bl.a bla d.v.s dvs o.s.v osv m.m mm m.fl mfl fr.o.m t.o.m tom \
 s.k sk p.g.a pga m.a.o t.h t.v i.o.m ca cirka kl nr st resp ev jfr obs \
 e.kr f.kr ang avd avs inkl exkl enl ung milj mdr kr proc vol kap fig \
@@ -43,7 +43,7 @@ mr mrs ms st jr sr inc ltd co etc e.g i.e vs cf al no fig approx dept est \
 jan feb mar apr jun jul aug sep sept oct okt nov dec \
 mon tue wed thu fri sat sun mån tis ons tors fre lör sön"
 
-visa_hjalp() {
+show_help() {
     cat <<EOF
 $PROGNAME — normaliserar Markdown för Pandoc.
 För skönlitteratur: brödtext och repliker, inte facklitteratur.
@@ -162,7 +162,7 @@ OM RADBRYTNINGAR
 EOF
 }
 
-fel_anvandning() {
+usage_error() {
     echo "$PROGNAME: $1" >&2
     echo "Kör '$PROGNAME --help' för mer information." >&2
     exit 1
@@ -170,45 +170,45 @@ fel_anvandning() {
 
 in_place=0
 check=0
-ut_katalog=""
-filer=()
+out_dir=""
+files=()
 
 while [ $# -gt 0 ]; do
     case "$1" in
         -i|--in-place) in_place=1 ;;
         -c|--check)    check=1 ;;
-        -h|--help)     visa_hjalp; exit 0 ;;
+        -h|--help)     show_help; exit 0 ;;
         -o|--out-dir)
-            [ $# -ge 2 ] || fel_anvandning "flaggan $1 kräver en katalog"
-            ut_katalog="$2"
+            [ $# -ge 2 ] || usage_error "flaggan $1 kräver en katalog"
+            out_dir="$2"
             shift
             ;;
-        --out-dir=*)   ut_katalog="${1#*=}" ;;
-        -*)            fel_anvandning "okänd flagga '$1'" ;;
-        *)             filer+=("$1") ;;
+        --out-dir=*)   out_dir="${1#*=}" ;;
+        -*)            usage_error "okänd flagga '$1'" ;;
+        *)             files+=("$1") ;;
     esac
     shift
 done
 
-[ "${#filer[@]}" -eq 0 ] && fel_anvandning "inga filer angivna"
+[ "${#files[@]}" -eq 0 ] && usage_error "inga filer angivna"
 
-if [ "$in_place" -eq 1 ] && [ -n "$ut_katalog" ]; then
-    fel_anvandning "--in-place och --out-dir går inte att kombinera"
+if [ "$in_place" -eq 1 ] && [ -n "$out_dir" ]; then
+    usage_error "--in-place och --out-dir går inte att kombinera"
 fi
 
-if [ -n "$ut_katalog" ] && ! mkdir -p "$ut_katalog"; then
-    fel_anvandning "kunde inte skapa katalogen '$ut_katalog'"
+if [ -n "$out_dir" ] && ! mkdir -p "$out_dir"; then
+    usage_error "kunde inte skapa katalogen '$out_dir'"
 fi
 
 # Skiljer ut ett eventuellt YAML-frontmatter (--- ... ---) från resten av
 # dokumentet, och skriver frontmatter respektive brödtext till de två
 # angivna filerna.
-dela_ut_frontmatter() {
+split_frontmatter() {
     local input="$1" fm_ut="$2" brod_ut="$3"
-    local forsta_raden
-    forsta_raden=$(head -n1 "$input" || true)
+    local first_line
+    first_line=$(head -n1 "$input" || true)
 
-    if [ "$forsta_raden" = "---" ]; then
+    if [ "$first_line" = "---" ]; then
         awk '
             NR==1 { print; in_fm=1; next }
             in_fm && /^---[ \t]*$/ { print; in_fm=0; next }
@@ -216,9 +216,9 @@ dela_ut_frontmatter() {
         ' "$input" > "$fm_ut"
 
         # Allt efter frontmatter-blockets avslutande "---"
-        local fm_rader
-        fm_rader=$(wc -l < "$fm_ut")
-        tail -n +"$((fm_rader + 1))" "$input" > "$brod_ut"
+        local fm_lines
+        fm_lines=$(wc -l < "$fm_ut")
+        tail -n +"$((fm_lines + 1))" "$input" > "$brod_ut"
     else
         : > "$fm_ut"
         cp "$input" "$brod_ut"
@@ -226,87 +226,87 @@ dela_ut_frontmatter() {
 }
 
 # Kärnan: bygger om brödtexten enligt reglerna i huvudkommentaren överst.
-normalisera_brodtext() {
-    awk -v forkortningar="$FORKORTNINGAR" '
-        function ar_tom(r)      { return (r ~ /^[ \t]*$/) }
-        function ar_staket(r)   { return (r ~ /^[ \t]*(```|~~~)/) }
-        function ar_citat(r)    { return (r ~ /^[ \t]*>/) }
-        function ar_rubrik(r)   { return (r ~ /^[ \t]*#+([ \t]|$)/) }
-        function ar_tabell(r)   { return (r ~ /^[ \t]*\|/) }
-        function ar_avdelare(r) { return (r ~ /^[ \t]*([-*_][ \t]*){3,}$/) }
-        function ar_lista(r)    { return (r ~ /^[ \t]*([-*+]|[0-9]+[.)])[ \t]/) }
+normalize_body() {
+    awk -v abbreviations="$ABBREVIATIONS" '
+        function is_blank(r)      { return (r ~ /^[ \t]*$/) }
+        function is_fence(r)   { return (r ~ /^[ \t]*(```|~~~)/) }
+        function is_blockquote(r)    { return (r ~ /^[ \t]*>/) }
+        function is_heading(r)   { return (r ~ /^[ \t]*#+([ \t]|$)/) }
+        function is_table(r)   { return (r ~ /^[ \t]*\|/) }
+        function is_rule(r) { return (r ~ /^[ \t]*([-*_][ \t]*){3,}$/) }
+        function is_list(r)    { return (r ~ /^[ \t]*([-*+]|[0-9]+[.)])[ \t]/) }
 
         # Drar ihop dubbla mellanslag inuti en rad, men lämnar indraget i
         # början orört — det bär listnivåer och indragna block.
-        function stada_mellanslag(rad,   indrag) {
+        function squeeze_spaces(rad,   indent) {
             match(rad, /^[ \t]*/)
-            indrag = substr(rad, 1, RLENGTH)
+            indent = substr(rad, 1, RLENGTH)
             rad = substr(rad, RLENGTH + 1)
 
             gsub(/[ \t][ \t]+/, " ", rad)
             sub(/[ \t]+$/, "", rad)
 
-            return indrag rad
+            return indent rad
         }
 
         # En tomrad före nästa block, men aldrig en inledande.
-        function avskiljare() {
-            if (startat) print ""
-            startat = 1
+        function separator() {
+            if (started) print ""
+            started = 1
         }
 
         # Kopierar en rad rakt igenom. Rader av samma slag hålls ihop (en
         # lista slits inte isär); ett byte av slag börjar ett nytt block.
-        function skriv_rad(rad, slag) {
-            if (slag != blockslag) { avskiljare(); blockslag = slag }
+        function emit_line(rad, kind) {
+            if (kind != block_kind) { separator(); block_kind = kind }
             print rad
         }
 
         # Avgör om skiljetecknet vi just läste verkligen avslutar en mening.
         # "hittills" är meningen så långt, "resten" det som följer efter den.
-        function meningen_slutar(hittills, resten,   ord) {
-            ord = hittills
-            sub(SLUT_OCH_AVSLUTARE, "", ord)  # bort med skiljetecken och citattecken
-            sub(/^.*[ \t]/, "", ord)          # behåll bara sista ordet
+        function sentence_ends(so_far, tail,   word) {
+            word = so_far
+            sub(END_AND_CLOSERS, "", word)  # bort med skiljetecken och citattecken
+            sub(/^.*[ \t]/, "", word)          # behåll bara sista ordet
 
-            if (ord == "") return 1
+            if (word == "") return 1
 
             # En ensam bokstav är en initial ("J. R. R."), inte en mening. En
             # ensam siffra är det inte: "Vi var 3. Sedan kom fler." är två
             # meningar på riktigt.
-            if (ord ~ /^[A-Za-zÅÄÖåäö]$/) return 0
-            if (tolower(ord) in FORK) return 0
+            if (word ~ /^[A-Za-zÅÄÖåäö]$/) return 0
+            if (tolower(word) in ABBR) return 0
 
-            sub(/^[ \t]+/, "", resten)
-            if (resten == "") return 1
+            sub(/^[ \t]+/, "", tail)
+            if (tail == "") return 1
 
             # Ett gement ord efter punkten betyder att meningen fortsätter.
-            if (resten ~ /^[abcdefghijklmnopqrstuvwxyz]/) return 0
+            if (tail ~ /^[abcdefghijklmnopqrstuvwxyz]/) return 0
             return 1
         }
 
         # Skriver ut det buffrade stycket, en mening per rad.
-        function skriv_stycke(   text, langd, i, tkn, nasta, hittills, resten) {
-            if (stycke == "") return
+        function emit_paragraph(   text, len_, i, ch, next_ch, so_far, tail) {
+            if (para == "") return
 
-            avskiljare()
-            blockslag = ""
+            separator()
+            block_kind = ""
 
-            text = stycke
-            stycke = ""
-            hittills = ""
-            langd = length(text)
+            text = para
+            para = ""
+            so_far = ""
+            len_ = length(text)
 
-            for (i = 1; i <= langd; i++) {
-                tkn = substr(text, i, 1)
-                hittills = hittills tkn
+            for (i = 1; i <= len_; i++) {
+                ch = substr(text, i, 1)
+                so_far = so_far ch
 
-                if (tkn != "." && tkn != "!" && tkn != "?") continue
+                if (ch != "." && ch != "!" && ch != "?") continue
 
                 # Svälj en hel följd av skiljetecken, t.ex. "..." eller "?!"
-                while (i < langd) {
-                    nasta = substr(text, i + 1, 1)
-                    if (nasta == "." || nasta == "!" || nasta == "?") { hittills = hittills nasta; i++ }
+                while (i < len_) {
+                    next_ch = substr(text, i + 1, 1)
+                    if (next_ch == "." || next_ch == "!" || next_ch == "?") { so_far = so_far next_ch; i++ }
                     else break
                 }
 
@@ -316,94 +316,94 @@ normalisera_brodtext() {
                 # stället för med index(), eftersom de svenska citattecknen
                 # består av flera byte och mawk räknar byte — slingan äter dem
                 # då byte för byte och hamnar på samma ställe.
-                while (i < langd) {
-                    nasta = substr(text, i + 1, 1)
-                    if (nasta ~ AVSLUTARE) { hittills = hittills nasta; i++ }
+                while (i < len_) {
+                    next_ch = substr(text, i + 1, 1)
+                    if (next_ch ~ CLOSERS) { so_far = so_far next_ch; i++ }
                     else break
                 }
 
-                resten = substr(text, i + 1)
+                tail = substr(text, i + 1)
 
                 # Inget blanktecken efter: 3.14, utkast.md, exempel.se/a.b
-                if (resten !~ /^[ \t]/) continue
-                if (!meningen_slutar(hittills, resten)) continue
+                if (tail !~ /^[ \t]/) continue
+                if (!sentence_ends(so_far, tail)) continue
 
-                sub(/^[ \t]+/, "", hittills)
-                print hittills
-                hittills = ""
+                sub(/^[ \t]+/, "", so_far)
+                print so_far
+                so_far = ""
 
                 # Kliv förbi blanktecknen som skilde meningarna åt
-                while (i < langd) {
-                    nasta = substr(text, i + 1, 1)
-                    if (nasta == " " || nasta == "\t") i++
+                while (i < len_) {
+                    next_ch = substr(text, i + 1, 1)
+                    if (next_ch == " " || next_ch == "\t") i++
                     else break
                 }
             }
 
-            sub(/^[ \t]+/, "", hittills)
-            sub(/[ \t]+$/, "", hittills)
-            if (hittills != "") print hittills
+            sub(/^[ \t]+/, "", so_far)
+            sub(/[ \t]+$/, "", so_far)
+            if (so_far != "") print so_far
         }
 
         BEGIN {
-            n = split(forkortningar, delar, /[ \t\n]+/)
+            n = split(abbreviations, parts, /[ \t\n]+/)
             for (i = 1; i <= n; i++)
-                if (delar[i] != "") FORK[delar[i]] = 1
+                if (parts[i] != "") ABBR[parts[i]] = 1
 
             # Skiljetecken som avslutar en mening tillsammans med . ! eller ?.
             # De svenska citattecknen ” ’ » « finns med — repliker är hela
             # skälet till att det spelar roll: utan dem skulle
             # ”Sa hon!” Han log. bli kvar på en enda rad.
-            AVSLUTARE = "[\"\047)\\]}*_”’»«›‹]"
-            SLUT_OCH_AVSLUTARE = "[.!?\"\047)\\]}*_”’»«›‹]+$"
+            CLOSERS = "[\"\047)\\]}*_”’»«›‹]"
+            END_AND_CLOSERS = "[.!?\"\047)\\]}*_”’»«›‹]+$"
 
-            startat = 0; i_kod = 0; i_kommentar = 0
-            stycke = ""; blockslag = ""
+            started = 0; in_code = 0; in_comment = 0
+            para = ""; block_kind = ""
         }
 
         {
             rad = $0
 
             # Inuti ett kodblock eller en HTML-kommentar: kopiera ordagrant.
-            if (i_kod) {
+            if (in_code) {
                 print rad
-                if (ar_staket(rad)) i_kod = 0
+                if (is_fence(rad)) in_code = 0
                 next
             }
-            if (i_kommentar) {
+            if (in_comment) {
                 print rad
-                if (rad ~ /-->/) { i_kommentar = 0; blockslag = "kommentar" }
+                if (rad ~ /-->/) { in_comment = 0; block_kind = "kommentar" }
                 next
             }
 
-            if (ar_staket(rad)) {
-                skriv_stycke()
-                avskiljare()
-                blockslag = ""
+            if (is_fence(rad)) {
+                emit_paragraph()
+                separator()
+                block_kind = ""
                 print rad
-                i_kod = 1
+                in_code = 1
                 next
             }
 
             # HTML-kommentarer skrivs för hand numera, så rör dem aldrig.
             if (rad ~ /<!--/) {
-                skriv_stycke()
-                skriv_rad(rad, "kommentar")
-                if (rad !~ /-->/) i_kommentar = 1
+                emit_paragraph()
+                emit_line(rad, "kommentar")
+                if (rad !~ /-->/) in_comment = 1
                 next
             }
 
-            if (ar_tom(rad)) {
-                skriv_stycke()
-                blockslag = ""
+            if (is_blank(rad)) {
+                emit_paragraph()
+                block_kind = ""
                 next
             }
 
-            if (ar_rubrik(rad)) {
-                skriv_stycke()
+            if (is_heading(rad)) {
+                emit_paragraph()
                 sub(/^[ \t]+/, "", rad)
-                avskiljare()
-                blockslag = ""
+                separator()
+                block_kind = ""
                 print rad
                 next
             }
@@ -411,10 +411,10 @@ normalisera_brodtext() {
             # Strukturrader står redan en per rad: skicka dem rakt igenom.
             # Tabeller undantas från mellanslagsstädningen — där är
             # uppställningen till för att gå att läsa i källfilen.
-            if (ar_avdelare(rad)) { skriv_stycke(); skriv_rad(rad, "avdelare"); next }
-            if (ar_citat(rad))    { skriv_stycke(); skriv_rad(stada_mellanslag(rad), "citat"); next }
-            if (ar_tabell(rad))   { skriv_stycke(); skriv_rad(rad, "tabell");   next }
-            if (ar_lista(rad))    { skriv_stycke(); skriv_rad(stada_mellanslag(rad), "lista"); next }
+            if (is_rule(rad)) { emit_paragraph(); emit_line(rad, "avdelare"); next }
+            if (is_blockquote(rad))    { emit_paragraph(); emit_line(squeeze_spaces(rad), "citat"); next }
+            if (is_table(rad))   { emit_paragraph(); emit_line(rad, "tabell");   next }
+            if (is_list(rad))    { emit_paragraph(); emit_line(squeeze_spaces(rad), "lista"); next }
 
             # Vanlig brödtext: samla ihop stycket, dela det när det tar slut.
             # Dubbla mellanslag mitt i en mening eller efter en punkt är
@@ -424,35 +424,35 @@ normalisera_brodtext() {
             sub(/^[ \t]+/, "", rad)
             sub(/[ \t]+$/, "", rad)
             gsub(/[ \t][ \t]+/, " ", rad)
-            stycke = (stycke == "") ? rad : stycke " " rad
+            para = (para == "") ? rad : para " " rad
         }
 
-        END { skriv_stycke() }
+        END { emit_paragraph() }
     '
 }
 
-behandla_en_fil() {
+process_file() {
     local input="$1"
-    local tmp_fm tmp_brod tmp_ut tmp_fel
+    local tmp_fm tmp_body tmp_out tmp_err
     tmp_fm=$(mktemp)
-    tmp_brod=$(mktemp)
-    tmp_ut=$(mktemp)
-    tmp_fel=$(mktemp)
-    trap 'rm -f "$tmp_fm" "$tmp_brod" "$tmp_ut" "$tmp_fel"' RETURN
+    tmp_body=$(mktemp)
+    tmp_out=$(mktemp)
+    tmp_err=$(mktemp)
+    trap 'rm -f "$tmp_fm" "$tmp_body" "$tmp_out" "$tmp_err"' RETURN
 
-    dela_ut_frontmatter "$input" "$tmp_fm" "$tmp_brod"
+    split_frontmatter "$input" "$tmp_fm" "$tmp_body"
 
     if [ -s "$tmp_fm" ]; then
-        cat "$tmp_fm" > "$tmp_ut"
-        echo "" >> "$tmp_ut"
+        cat "$tmp_fm" > "$tmp_out"
+        echo "" >> "$tmp_out"
     fi
-    normalisera_brodtext < "$tmp_brod" >> "$tmp_ut"
+    normalize_body < "$tmp_body" >> "$tmp_out"
 
     if [ "$check" -eq 1 ]; then
         if command -v pandoc >/dev/null 2>&1; then
-            if ! pandoc -f markdown -t markdown "$tmp_ut" -o /dev/null 2>"$tmp_fel"; then
+            if ! pandoc -f markdown -t markdown "$tmp_out" -o /dev/null 2>"$tmp_err"; then
                 echo "$PROGNAME: pandoc-fel i $input:" >&2
-                cat "$tmp_fel" >&2
+                cat "$tmp_err" >&2
             fi
         else
             echo "$PROGNAME: pandoc är inte installerat, hoppar över --check för $input" >&2
@@ -463,7 +463,7 @@ behandla_en_fil() {
         # Är filen redan normaliserad händer ingenting alls. Annars hade en
         # andra körning skrivit över säkerhetskopian med den redan omgjorda
         # texten, och originalets radbrytningar vore borta för gott.
-        if cmp -s "$input" "$tmp_ut"; then
+        if cmp -s "$input" "$tmp_out"; then
             echo "Oförändrad: $input"
             return 0
         fi
@@ -471,39 +471,39 @@ behandla_en_fil() {
         # Rör inte heller en .bak som redan finns — den är från första
         # körningen och är den enda kvarvarande kopian av originalet.
         if [ -e "$input.bak" ]; then
-            cp "$tmp_ut" "$input"
+            cp "$tmp_out" "$input"
             echo "Uppdaterad: $input (befintlig $input.bak lämnad orörd)"
         else
             cp "$input" "$input.bak"
-            cp "$tmp_ut" "$input"
+            cp "$tmp_out" "$input"
             echo "Uppdaterad: $input (säkerhetskopia: $input.bak)"
         fi
-    elif [ -n "$ut_katalog" ]; then
+    elif [ -n "$out_dir" ]; then
         # Egen utkatalog: behåll filnamnet som det är. Då fungerar
         # 'pandoc bygge/*.md' rakt av, och nollutfyllda kapitelnummer
         # sorterar fortfarande rätt.
-        local ut="$ut_katalog/$(basename "$input")"
+        local out="$out_dir/$(basename "$input")"
 
         # Skriv aldrig över källan. Det skulle hända om --out-dir pekar på
         # den katalog filen redan ligger i, och då vore originalet borta.
-        if [ "$(readlink -f "$ut" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
+        if [ "$(readlink -f "$out" 2>/dev/null)" = "$(readlink -f "$input" 2>/dev/null)" ]; then
             echo "$PROGNAME: hoppar över $input — utdata skulle skriva över källan" >&2
             return 0
         fi
 
-        cp "$tmp_ut" "$ut"
-        echo "Skrev: $ut"
+        cp "$tmp_out" "$out"
+        echo "Skrev: $out"
     else
-        local ut="${input%.md}.pandoc.md"
-        cp "$tmp_ut" "$ut"
-        echo "Skrev: $ut"
+        local out="${input%.md}.pandoc.md"
+        cp "$tmp_out" "$out"
+        echo "Skrev: $out"
     fi
 }
 
-for f in "${filer[@]}"; do
+for f in "${files[@]}"; do
     if [ ! -f "$f" ]; then
         echo "$PROGNAME: hoppar över (inte en fil): $f" >&2
         continue
     fi
-    behandla_en_fil "$f"
+    process_file "$f"
 done

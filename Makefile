@@ -5,7 +5,7 @@
 
 PREFIX ?= $(HOME)/.local
 BINDIR := $(PREFIX)/bin
-ROT    := $(shell pwd)
+ROOT   := $(shell pwd)
 
 .PHONY: install uninstall check help
 
@@ -20,8 +20,8 @@ help:
 
 install:
 	@mkdir -p "$(BINDIR)"
-	@ln -sf "$(ROT)/bin/manus" "$(BINDIR)/manus"
-	@echo "Installerat: $(BINDIR)/manus -> $(ROT)/bin/manus"
+	@ln -sf "$(ROOT)/bin/manus" "$(BINDIR)/manus"
+	@echo "Installerat: $(BINDIR)/manus -> $(ROOT)/bin/manus"
 	@case ":$$PATH:" in \
 		*":$(BINDIR):"*) echo "$(BINDIR) ligger i PATH. Kör 'manus hjälp'." ;; \
 		*) echo "OBS: $(BINDIR) ligger INTE i PATH."; \
