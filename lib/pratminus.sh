@@ -73,11 +73,8 @@ FLAGGOR
                      bort $RAPPORTNAMN.
     -h, --help       Visar den här hjälpen och avslutar.
 
-VILKA RADER RÄKNAS
-    En rad räknas som en replik när den, bortsett från indrag, BÖRJAR med
-    ett citattecken och har ett till någonstans senare på raden:
-
-    En rad görs om bara när ALLA tre stämmer: den börjar med ett
+VILKA STYCKEN RÄKNAS
+    Ett stycke görs om bara när ALLA tre stämmer: det börjar med ett
     citattecken, har ett avslutande på samma rad, och ser ut som en replik
     — alltså slutar med skiljetecken innanför citatet ELLER följs av ett
     kommatecken utanför det.
@@ -102,16 +99,21 @@ FLER ÄN EN REPLIK I STYCKET
     allt i ett stycke:
 
         ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
+        -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 
-    Ett manus satt med pratminus har i princip inga citattecken alls, utom
-    vid äkta citat. Därför görs alla replikerna om, inte bara den första,
-    och stycket delas framför varje ny replik:
+    Pratminus markerar en REPLIKVÄXLING, inte varje yttrande. Samma person
+    talar, det kommer en berättande beat, samma person fortsätter — allt är
+    en och samma tur. Därför sätts ett enda pratminus först i stycket, de
+    inre citattecknen faller bort, och stycket delas INTE. En delning
+    skulle påstå att någon annan tar över.
 
-        -- Jag gjorde det. Han såg bort.
+    STÅR REPLIKEN INTE FÖRST i stycket lämnas det orört:
 
-        -- Det var nödvändigt.
+        Hon vände sig om. ”Vad gör du?” frågade hon.
 
-    Berättandet stannar hos repliken det följer på.
+    Pratminus måste inleda stycket, så det här kräver en styckebrytning —
+    och var den ska gå är ett författarbeslut. Stycket hamnar i
+    arbetslistan i stället.
 
 STYCKET ÄR ENHETEN, INTE RADEN
     Framåtläsningen går över radgränser men stannar ALLTID vid tomraden.
@@ -158,19 +160,17 @@ ARBETSLISTA
     inga problem TAS $RAPPORTNAMN BORT — en lista som ligger kvar tom läses
     som att det finns något ogjort.
 
-    Listan läses aldrig in som källtext, så den kan inte råka bli manus.
-
-    --rapport FIL lägger listan någon annanstans, med valfritt namn.
+    Två saker hamnar där. Ett stycke med udda antal citattecken — ett
+    skrivfel, och vilket tecken som fattas går inte att gissa. Och ett
+    stycke där repliken inte står först, som behöver en styckebrytning du
+    får sätta själv. Skälet står på varje rad i listan.
 
     Filen är GENERERAD och skrivs över varje gång. Egna anteckningar i den
     överlever inte. Den läses aldrig in som källtext, så '$PROGNAME *.md'
     tar inte med sin egen rapport.
 
-    Ett obalanserat stycke är nästan alltid ett skrivfel i manuset. Vilket
-    tecken som fattas går inte att gissa, så verktyget gissar inte.
-
-    Vill du ha alltihop samlat på ett ställe också: --rapport FIL.
-    Vill du inte ha några listor alls: --ingen-rapport.
+    --rapport FIL lägger listan någon annanstans, med valfritt namn.
+    --ingen-rapport rör ingen lista alls.
 
 VAD SOM LÄMNAS I FRED
     YAML-frontmatter högst upp i filen, kodblock (\`\`\` eller ~~~) och
@@ -321,7 +321,7 @@ trap rensa_rapport EXIT
 # helt orört. Utan det taket skulle ett skrivfel svälja text ända fram
 # till nästa citattecken, kanske flera stycken bort.
 #
-# Antalet omgjorda repliker och antalet obalanserade stycken skrivs på
+# Antalet omgjorda repliker och antalet stycken som lämnats orörda skrivs på
 # stderr, så att texten på stdout inte blandas ihop med siffrorna.
 # ---------------------------------------------------------------------
 konvertera() {
@@ -351,7 +351,8 @@ konvertera() {
         # eller ett äkta citat.
         function bearbeta_stycke(text, indrag,
                                  rest, fore, oc, inner, cc, efter, ar_replik,
-                                 sn, styck, i, n_citat, kopia, resultat) {
+                                 sn, styck, i, n_citat, kopia, resultat,
+                                 behandlat) {
             kopia = text
             n_citat = gsub(CITAT, "&", kopia)
 
@@ -385,18 +386,35 @@ konvertera() {
 
                 if (!ar_replik) {
                     styck[sn] = styck[sn] fore oc inner cc
+                    behandlat = 1
                     continue
                 }
 
-                # Texten före repliken hör till föregående stycke. Fanns det
-                # något där måste repliken börja ett nytt — berättandet
-                # stannar hos repliken det följer på.
-                styck[sn] = styck[sn] fore
-                if (trimma(styck[sn]) != "") { sn++; styck[sn] = "" }
+                if (!behandlat) {
+                    behandlat = 1
 
-                styck[sn] = styck[sn] streck " " inner
+                    # Berättande FÖRE första repliken. Pratminus måste
+                    # inleda stycket, så det här kräver att stycket delas —
+                    # och var brytningen ska gå är ett författarbeslut.
+                    if (trimma(styck[sn] fore) != "") return "MITTI"
+
+                    styck[sn] = streck " " inner
+                    antal++
+                    resultat = 1
+                    continue
+                }
+
+                # Efterföljande replik i SAMMA stycke. Pratminus markerar en
+                # replikväxling, inte varje yttrande: samma person talar,
+                # det kommer en berättande beat, samma person fortsätter.
+                # Allt är en och samma tur. Citattecknen faller bort, men
+                # inget nytt pratminus sätts och stycket delas inte — en
+                # delning skulle påstå att någon annan tar över.
+                #
+                #   ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
+                #   -- Jag gjorde det. Han såg bort. Det var nödvändigt.
+                styck[sn] = styck[sn] fore inner
                 antal++
-                resultat = 1
             }
 
             styck[sn] = styck[sn] rest
@@ -427,18 +445,21 @@ konvertera() {
 
             resultat = bearbeta_stycke(joined, indrag)
 
-            if (resultat == "OBALANS") {
+            if (resultat == "OBALANS" || resultat == "MITTI") {
                 # Samlas till arbetslistan oavsett läge. Den som kör en
                 # skarp konvertering behöver veta vad som INTE gjordes.
+                if (resultat == "MITTI") mitti++
                 if (rapport != "")
-                    printf "%s\t%d\t%s\n", filnamn, start_rad, joined >> rapport
+                    printf "%s\t%d\t%s\t%s\n", filnamn, start_rad, resultat, joined >> rapport
 
                 if (lista) {
-                    # Hela stycket, inte bara första raden — det saknade
-                    # citattecknet kan sitta var som helst i det.
-                    obal_rad[obalans] = sprintf("  rad %d:", start_rad)
+                    # Hela stycket, inte bara första raden — det som fattas
+                    # kan sitta var som helst i det.
+                    n_kvar++
+                    kvar_rad[n_kvar] = sprintf("  rad %d (%s):", start_rad,
+                        resultat == "MITTI" ? "replik mitt i stycket" : "citattecken saknas")
                     for (i = 1; i <= n_rader; i++)
-                        obal_rad[obalans] = obal_rad[obalans] sprintf("\n      %s", rader[i])
+                        kvar_rad[n_kvar] = kvar_rad[n_kvar] sprintf("\n      %s", rader[i])
                 } else ut_orort()
             } else if (resultat == "") {
                 ut_orort()
@@ -495,11 +516,11 @@ konvertera() {
 
         END {
             spola_stycke()
-            if (lista && obalans > 0) {
-                print "  -- obalanserade citat, lämnas orörda:"
-                for (n = 1; n <= obalans; n++) print obal_rad[n]
+            if (lista && n_kvar > 0) {
+                print "  -- lämnade orörda, kräver handpåläggning:"
+                for (n = 1; n <= n_kvar; n++) print kvar_rad[n]
             }
-            print antal, obalans + 0 > "/dev/stderr"
+            print antal, (obalans + mitti) + 0 > "/dev/stderr"
         }
     ' "$1"
 }
@@ -520,7 +541,7 @@ behandla_en_fil() {
         read -r antal flera < <(forhandsvisa "$input" 2>&1 >"$tmp_rader")
         if [ "${antal:-0}" -gt 0 ] || [ "${flera:-0}" -gt 0 ]; then
             if [ "${flera:-0}" -gt 0 ]; then
-                echo "$input ($antal repliker, $flera obalanserade stycken):"
+                echo "$input ($antal repliker, $flera kvar åt dig):"
             else
                 echo "$input ($antal repliker):"
             fi
@@ -549,11 +570,11 @@ behandla_en_fil() {
         # körningen och är den enda kvarvarande kopian av originalet.
         if [ -e "$input.bak" ]; then
             cp "$tmp_ut" "$input"
-            echo "Uppdaterad: $input ($antal repliker, $flera obalanserade, befintlig $input.bak lämnad orörd)"
+            echo "Uppdaterad: $input ($antal repliker, $flera kvar åt dig, befintlig $input.bak lämnad orörd)"
         else
             cp "$input" "$input.bak"
             cp "$tmp_ut" "$input"
-            echo "Uppdaterad: $input ($antal repliker, $flera obalanserade, säkerhetskopia: $input.bak)"
+            echo "Uppdaterad: $input ($antal repliker, $flera kvar åt dig, säkerhetskopia: $input.bak)"
         fi
     elif [ -n "$ut_katalog" ]; then
         local ut="$ut_katalog/$(basename "$input")"
@@ -637,8 +658,13 @@ if [ "$ingen_rapport" -eq 0 ]; then
             echo
             echo "Rätta i källfilen och kör \`$PROGNAME\` igen, så uppdateras listan."
             echo
-            while IFS=$'\t' read -r r_fil r_rad r_text; do
-                echo "- [ ] \`${r_fil#./}\` rad $r_rad"
+            while IFS=$'\t' read -r r_fil r_rad r_orsak r_text; do
+                if [ "$r_orsak" = "MITTI" ]; then
+                    skal="repliken står mitt i stycket — stycket behöver delas"
+                else
+                    skal="ett citattecken saknas, eller ett står för mycket"
+                fi
+                echo "- [ ] \`${r_fil#./}\` rad $r_rad — $skal"
                 echo
                 echo "  > $(korta "$r_text")"
                 echo

@@ -202,12 +202,27 @@ ett citerat ord lämnas det ifred:
 ”Nomen libri” är arbetsnamnet.     ← lämnas orörd, det är ingen replik
 ```
 
-Och saknas ett citattecken någonstans lämnas hela stycket orört, eftersom
-det inte går att gissa vilket tecken som fattas. De ställena samlas i en
-att-göra-lista, `CITAT_PROBLEM.md`, i mappen du står i:
+Talar samma person både före och efter en berättande beat är det en enda
+replik, och den behåller ett enda pratminus:
+
+```
+”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
+-- Jag gjorde det. Han såg bort. Det var nödvändigt.
+```
+
+Två saker lämnas helt åt dig. Om ett citattecken saknas någonstans, för då
+går det inte att gissa vilket. Och om repliken inte står först i stycket —
+då behövs en styckebrytning, och var den ska gå avgör du:
+
+```
+Hon vände sig om. ”Vad gör du?” frågade hon.
+```
+
+De ställena samlas i en att-göra-lista, `CITAT_PROBLEM.md`, i mappen du
+står i, med skälet utskrivet:
 
 ```markdown
-- [ ] `02_urtid/010_kapitel.md` rad 85
+- [ ] `02_urtid/010_kapitel.md` rad 85 — ett citattecken saknas, eller ett står för mycket
 
   > Yhla suckade. ”Var gömde du honom? Frågade hon hest.
 ```

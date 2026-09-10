@@ -1,56 +1,69 @@
-# manusverktyg
+# Manusverktyg
 
-**För skönlitteratur.** Tre verktyg för vägen från markdown till färdigt
-romanmanus, samlade under ett kommando: `manus`.
+Om du bara vill komma igång finns en **[KVICKGUIDE.md](KVICKGUIDE.md)**.
+
+Projektet består av tre verktyg för vägen från markdown till färdigt manus,
+samlade under kommandot: `manus`.
 
 ```bash
 manus lint       # en mening per rad, städade mellanslag
-manus pratminus  # citatrepliker till pratminus
 manus bygg       # kör Pandoc på alla numrerade dokument, i nummerordning
+manus pratminus  # ändrar citatrepliker till pratminus
 ```
 
 Allt — kommandon, hjälptexter och dokumentation — är på svenska.
 
 Verktygen förutsätter genomgående ett skönlitterärt manus: kapitel i
-läsordning, repliker och berättande, en text som ska bli en bok. De är
-inte gjorda för facklitteratur, rapporter eller teknisk dokumentation —
-där är korsreferenser, källhänvisningar, register och figurnumrering det
-som betyder något, och sådant hanteras inte alls här.
+läsordning, repliker och berättande De är _inte_ gjorda för facklitteratur,
+rapporter eller teknisk dokumentation —  där korsreferenser, 
+källhänvisningar, register och figurnumrering är av vikt.
 
-## Vad projektet vill
+Slutstationen är Pandoc som sammanställer ett dokument i ett av tre
+format.
 
-**Källfilen ska vara läsbar för människor, inte bara för Pandoc.**
-Ett manus lever i git i flera år, och då spelar det roll hur ändringar ser
-ut. Ligger ett stycke på en enda lång rad lyser hela stycket upp i en diff
-så fort du rättar ett ord. Ligger varje mening på egen rad ser du exakt
-vilken mening som ändrades. Det är den enda ändring `manus lint` gör åt
-brödtexten, och den ändrar aldrig hur något renderas — en ensam radbrytning
-är en mjuk brytning i Markdown och betyder mellanslag.
+## Projektets syfte
 
-**Numreringen ska bära strukturen, inte en projektfil.**
-Kapitelordningen finns i filnamnen. Ingen databas, ingen manifestfil som
-kan komma ur synk med verkligheten. Byter du ordning byter du namn, och det
-syns i `git log`. För sammanställningar som numreringen inte passar för
-finns `--manifest`, men då varnar verktyget för varje fil som fallit ur
+Manusverktygen utför ändringar i filer för att göra dem uniforma och
+föbereda kompilering till ett manus.
+
+**Markdown är en förutsättning**.
+Markdown är utmärkt för att skriva text utan att behöva bry sig om format
+eller utseende. Källfilen är _läsbar för människor_, och det underlättar
+samarbete och redigering. Manusverktygen är beroende av filer i
+markdown.
+
+**Numreringen bär strukturen**
+Kapitelordningen utgår från numrerade filer. Ingen databas, ingen
+manifestfil som kan komma ur synk med verkligheten. Genom att ändra
+filnamn styr du texternas ordnng. Det syns också bra i en `git log`.
+Se nedan för fil- och katalognumreringar.
+
+Textordningen kan också styras med en yaml-fil. Använd flaggan
+`--manifest`. Verktyget varnar för varje fil som eventuellt fallit ur
 listan — se [Manifest](#manifest--när-numreringen-inte-passar).
 
 **Anteckningar är inte kapitel.**
 Ett manus samlar på sig research, makulatur och skisser. Sådant får inte
-råka hamna i boken bara för att filerna är numrerade. En onumrerad katalog
-är därför utanför bygget — men går att bygga för sig när du vill läsa den.
+råka hamna i boken. En onumrerad katalog hamnar därför utanför bygget — 
+men går att bygga för sig om det behövs.
 
 **Verktygen ska säga vad de gör.**
 `manus bygg` skriver ut kapitelordningen, vilka stilmallar den hittade och
 vilket typsnitt den valde, innan Pandoc kör. Fel kapitelordning är det enda
 felet som inte syns förrän någon annan läser boken.
 
-**Ingenting får försvinna.**
-Originalen rörs aldrig utan `--in-place`, och då sparas en `.bak`.
-Meningsdelaren är medvetet försiktig: vid minsta tvekan lämnas raden
-hopfogad. En missad brytning kostar en lång rad, ingenting annat.
+Om du använder _git_ för att versionshantera ditt manuskript, då underlättar
+det att dela upp dokumentet så att varje mening får sin egen rad.
+Ligger ett stycke på en enda lång rad lyser hela stycket upp i en `git diff`
+så fort du rättar ett ord. Ligger varje mening på egen rad ser du exakt
+vilken mening som ändrades. Det är den enda ändring `manus lint` gör åt
+brödtexten, och den ändrar aldrig hur något renderas — en ensam radbrytning
+är en mjuk brytning i Markdown och betyder mellanslag. För nytt stycke
+krävs en tom rad emellan.
 
-Verktygen arbetar på vanlig markdown och förutsätter ingenting om var
-filerna kommit ifrån.
+**Ingenting får försvinna.**
+Originalen rörs aldrig utan `--in-place`, och då sparas ändå en
+backup, `.bak`.
 
 ## Installation
 
@@ -74,10 +87,6 @@ Ställ dig i bokens katalog:
 manus bygg --lista                  # kontrollera kapitelordningen FÖRST
 manus bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
 ```
-
-Nybörjare, eller bara kommit tillbaka efter ett halvår? **[KVICKGUIDE.md](KVICKGUIDE.md)**
-tar de fyra saker man faktiskt gör — hela boken, ett kapitel, och ett urval
-filer med eller utan lista — på en sida, skriven för den som inte kodar.
 
 ## Vilka filer tas med, och i vilken ordning
 
@@ -181,20 +190,30 @@ förvanskad. YAML-frontmatter, kodblock och HTML-kommentarer kopieras rakt
 igenom — i arbetsanteckningar är citattecken ofta obalanserade med flit.
 
 **Fler än en replik i stycket.** Det vanligaste mönstret i svensk dialog är
-replik, berättande, replik i ett och samma stycke. Ett manus satt med
-pratminus har i princip inga citattecken alls utom vid äkta citat, så alla
-replikerna görs om och stycket delas framför varje ny:
+replik, berättande, replik i ett och samma stycke:
 
 ```
 ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
 ```
 ```
--- Jag gjorde det. Han såg bort.
-
--- Det var nödvändigt.
+-- Jag gjorde det. Han såg bort. Det var nödvändigt.
 ```
 
-Berättandet stannar hos repliken det följer på.
+Pratminus markerar en **replikväxling**, inte varje yttrande. Samma person
+talar, det kommer en berättande beat, samma person fortsätter — allt är en
+och samma tur. Därför sätts ett enda pratminus först i stycket, de inre
+citattecknen faller bort, och stycket delas **inte**. En delning skulle
+påstå att någon annan tar över.
+
+**Står repliken inte först** i stycket lämnas det orört:
+
+```
+Hon vände sig om. ”Vad gör du?” frågade hon.
+```
+
+Pratminus måste inleda stycket, så det här kräver en styckebrytning — och
+var den ska gå är ett författarbeslut. Stycket hamnar i arbetslistan i
+stället.
 
 ### Stycket är enheten, inte raden
 
