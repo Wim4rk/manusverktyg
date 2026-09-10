@@ -304,10 +304,10 @@ manus.
 `--rapport FIL` lägger listan någon annanstans. `--ingen-rapport` rör ingen
 lista alls.
 
-> **Ordningen mot `manus lint`:** kör `pratminus` **först**. Lint delar en
-> replik som innehåller flera meningar över flera rader, och då sitter det
-> avslutande citattecknet inte längre på samma rad som det inledande -
-> ingenting konverteras. Åt andra hållet går det bra.
+> **Ordningen mot `manus lint` spelar ingen roll.** Båda arbetar på
+> stycken, och ett stycke är samma sak före och efter lint. Vill du ha en
+> mening per rad även i de omgjorda replikerna, kör lint sist - pratminus
+> fogar ihop stycket det skrivit om till en rad.
 
 Förvalet är två bindestreck, eftersom Pandoc gör om `--` till ett riktigt
 tankstreck vid rendering och `manus lint` känner igen formen. Vill du ha
