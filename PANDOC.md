@@ -49,7 +49,8 @@ hård radbrytning: två blanksteg sist på en rad. Den formen stöds inte
 här — `manus lint` tar bort avslutande blanksteg. Ett osynligt tecken ska
 inte styra hur texten bryts, och två blanksteg efter varandra är nästan
 alltid ett skrivfel. Behöver du bevara exakta radbrytningar, som i en
-dikt, använd radblock: börja varje rad med `| `.
+dikt, använd radblock: börja varje rad med `| `. Ett utskrivet `<br>`
+fungerar i EPUB men försvinner i DOCX, så radblock är det säkra valet.
 
 Vinsten får vi vid redigeringen: en ändrad mening syns som en ändrad rad
 i `git diff`, i stället för att hela stycket lyser upp.
@@ -114,7 +115,7 @@ manus bygg --lista
 ### PDF - det vanligaste
 
 ```bash
-manus bygg --lint -o MinBok.pdf -- \
+manus bygg -o MinBok.pdf -- \
   --pdf-engine=xelatex \
   --toc \
   -V lang=sv \
@@ -127,9 +128,6 @@ manus bygg --lint -o MinBok.pdf -- \
 
 Testat och verifierat i sin helhet. Några ord om varje del:
 
-* `--lint` kör `manus lint` på filerna först, till en temp-katalog som
-  städas bort efteråt. Källfilerna rörs aldrig och inga `.pandoc.md` blir
-  liggande i skrivkatalogen.
 * Allt efter `--` går rakt vidare till Pandoc.
 * `--pdf-engine=xelatex` behövs för att `mainfont` ska fungera alls. Utan
   flaggan används `pdflatex`, som klarar åäö men inte låter dig välja
@@ -152,7 +150,7 @@ automatiskt - se avsnitt 3.1. För PDF spelar bara filtret roll.
 ### EPUB - för alfa-/betaläsare. Eller självpublicering...
 
 ```bash
-manus bygg --lint -o MinBok.epub -- --toc --metadata title="Nomen libri"
+manus bygg -o MinBok.epub -- --toc --metadata title="Nomen libri"
 ```
 
 EPUB behöver ingen PDF-motor och inget typsnitt; läsarens app bestämmer
@@ -163,7 +161,7 @@ metadata-fil.
 ### DOCX - inlämning till förlag eller agent
 
 ```bash
-manus bygg --lint -o MinBok-inlamning.docx
+manus bygg -o MinBok-inlamning.docx
 ```
 
 Stilmallen används automatiskt, så `--reference-doc` behöver inte skrivas ut.

@@ -101,9 +101,9 @@ VAD DEN ÄNDRAR
         överlever varken kopiering mellan program eller en editor som
         trimmar rader. Bara en TOM RAD avgör var ett nytt stycke börjar.
 
-        Behöver du bevara exakta radbrytningar — dikter, sånger, listor i
-        dialog — använd radblock i stället: börja varje rad med "| ". Det
-        är synligt i källfilen och överlever allt.
+        Behöver du bevara exakta radbrytningar, använd radblock: börja
+        varje rad med "| ". Det syns i källfilen och fungerar i alla
+        format. Ett utskrivet <br> fungerar i EPUB men försvinner i DOCX.
 
 VAD DEN LÄMNAR I FRED
     YAML-frontmatter högst upp i filen, kodblock (\`\`\` eller ~~~),

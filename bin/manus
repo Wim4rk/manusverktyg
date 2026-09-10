@@ -55,7 +55,7 @@ SNABBSTART
     Ställ dig i bokens katalog:
 
         $PROGNAME bygg --lista          # kontrollera kapitelordningen
-        $PROGNAME bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
+        $PROGNAME bygg -o bok.pdf -- --pdf-engine=xelatex --toc
 
 VAR SAKER LIGGER
     Projektet:      $MANUS_ROOT

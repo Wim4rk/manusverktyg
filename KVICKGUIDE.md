@@ -10,7 +10,7 @@ Vill du veta var du står: skriv `pwd` och tryck retur.
 Om du vill skapa en PDF: ställ dig i bokens katalog:
 
 ```bash
-manus bygg --lint -o bok.pdf -- --pdf-engine=xelatex --toc
+manus bygg -o bok.pdf -- --pdf-engine=xelatex --toc
 ```
 
 Om du vill skapa en annan sorts fil byter du bara filändelse
@@ -45,15 +45,11 @@ manus bygg --lista
 Det skriver bara ut vilka filer som skulle komma med, i ordning, och bygger
 ingenting.
 
-**Två varianter värda att kunna:**
+**En variant värd att kunna:**
 
 ```bash
-manus bygg --lint -o bok.docx                        # städa texten innan bygge
 manus bygg -o bok.pdf -- --pdf-engine=xelatex --toc  # PDF med innehållslista
 ```
-
-`--lint` lägger varje mening på egen rad i en tillfällig kopia innan bygget.
-Dina egna filer rörs inte.
 
 ---
 

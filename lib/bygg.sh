@@ -55,9 +55,6 @@ FLAGGOR
                      Se MANIFEST nedan.
     -s, --separat    Renderar varje dokument för sig i stället för att slå
                      ihop dem till ett.
-    -l, --lint       Kör manus lint på filerna först, till en tillfällig
-                     katalog. Originalen rörs inte. Ger en mening per rad
-                     och städade mellanslag innan Pandoc ser texten.
     -n, --lista      Visar bara vilka filer som skulle tas med, i ordning,
                      och kör ingenting. Kör alltid detta först för att
                      granska ordningen.
@@ -178,7 +175,7 @@ EXEMPEL
         $PROGNAME
 
     Städa texten först och bygg en PDF med innehållsförteckning:
-        $PROGNAME --lint -o bok.pdf -- --toc
+        $PROGNAME -o bok.pdf -- --toc
 
     Rendera varje kapitel för sig till katalogen 'korrektur':
         $PROGNAME --separat -o korrektur
@@ -340,7 +337,6 @@ find_asset() {
 }
 
 separate=0
-lint=0
 list_only=0
 no_template=0
 target=""
@@ -384,7 +380,6 @@ while [ $# -gt 0 ]; do
         --css=*)        css_file="${1#*=}" ;;
         --utan-mall)    no_template=1 ;;
         -s|--separat)   separate=1 ;;
-        -l|--lint)      lint=1 ;;
         -n|--lista)     list_only=1 ;;
         -h|--help)      show_help; exit 0 ;;
         --)             shift; pandoc_flags=("$@"); break ;;
@@ -476,8 +471,7 @@ else
     fi
 fi
 
-# Sökvägen relativt katalogen vi står i. Behövs även efter en lint, då
-# 'filer' pekar in i en temp-katalog i stället.
+# Sökvägen relativt katalogen vi står i.
 rel_paths=()
 for f in "${files[@]}"; do
     rel_paths+=("${f#./}")
@@ -641,34 +635,6 @@ if [ "${#asset_flags[@]}" -gt 0 ]; then
     for lf in ${lua_filters+"${lua_filters[@]}"}; do
         echo "  lua-filter: $lf"
     done
-fi
-
-# ---------------------------------------------------------------------
-# Städa texten först, om det begärts
-#
-# manus lint skriver med -o alla filer till samma katalog och behåller
-# bara filnamnet. Här kan två kapitel i olika underkataloger heta likadant,
-# så varje fil lintas till sin EGNA relativa plats under temp-katalogen.
-# ---------------------------------------------------------------------
-tmp_lint=""
-cleanup() { [ -n "$tmp_lint" ] && rm -rf "$tmp_lint"; }
-trap cleanup EXIT
-
-if [ "$lint" -eq 1 ]; then
-    linter="$ROOT/lib/lint.sh"
-    [ -x "$linter" ] || usage_error "hittar inte lib/lint.sh i $ROOT"
-
-    tmp_lint=$(mktemp -d)
-    echo
-    echo "Städar texten med manus lint..."
-
-    linted=()
-    for ((n = 0; n < ${#files[@]}; n++)); do
-        rel="${rel_paths[n]}"
-        "$linter" -o "$tmp_lint/$(dirname "$rel")" "${files[n]}" >/dev/null
-        linted+=("$tmp_lint/$rel")
-    done
-    files=("${linted[@]}")
 fi
 
 echo
