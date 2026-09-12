@@ -24,10 +24,10 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 
 `manus lint` lägger en mening per rad och normaliserar tomrader. Det ändrar
 bara källfilen, aldrig det renderade resultatet - se
-[README](README.md#städa-texten-manus-lint).
+[HANDBOK](HANDBOK.md#städa-texten-manus-lint).
 
 Numreringen som styr kapitelordningen beskrivs i
-[README](README.md#vilka-filer-tas-med-och-i-vilken-ordning).
+[HANDBOK](HANDBOK.md#vilka-filer-tas-med-och-i-vilken-ordning).
 
 ---
 
@@ -135,7 +135,7 @@ i olika delar av boken inte skriver över varandra.
 `manus bygg` plockar upp `custom-reference.docx` och `swedish-quotes.lua`
 automatiskt och skriver ut vilka den hittade. Sökordningen och flaggorna
 `-r`, `-f` och `--utan-mall` står i
-[README](README.md#stilmallen).
+[HANDBOK](HANDBOK.md#stilmallen).
 
 ### Utan skripten, för hand
 
