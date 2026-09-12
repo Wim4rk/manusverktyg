@@ -5,6 +5,10 @@ med mappen du står i just nu.
 
 Vill du veta var du står: skriv `pwd` och tryck retur.
 
+## Installation
+
+Ställ dig mappen med filerna och skriv `make install`.
+
 ## Snabbstart
 
 Om du vill skapa en PDF: ställ dig i bokens katalog:
