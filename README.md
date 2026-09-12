@@ -247,6 +247,24 @@ Hon vände sig om.
 Här börjar en **ny** talartur, till skillnad från fallet ovan. Berättandet
 blir ett eget stycke.
 
+### Citat i citat
+
+Inre citat skrivs **alltid** med enkla tecken i källan: `'så här'`. Hur de
+renderas beror på hur dialogen är satt, och avgörs av filtret vid bygget:
+
+```
+”Han sa 'hej' till mig”, sa hon.    →   ”Han sa ’hej’ till mig”, sa hon.
+-- Han sa 'hej' till mig, sa hon.   →   – Han sa ”hej” till mig, sa hon.
+```
+
+I en talstreckstext finns ingen yttre nivå, så det inre citatet är det enda
+och får dubbla tecken. Källan behåller sin `'` - `manus talstreck` rör den
+aldrig. Det gör verktyget säkert att köra om: i en talstreckstext är varje
+`"` en replik som råkat skrivas med citattecken, och exakt de görs om.
+
+Apostrofer (`nå'n`, `Lars'`) påverkas inte - Pandoc skiljer dem från
+citattecken på sammanhang.
+
 ### Stycket är enheten, inte raden
 
 Framåtläsningen går över radgränser men stannar **alltid vid tomraden**.

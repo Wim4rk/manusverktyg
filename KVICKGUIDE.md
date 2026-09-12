@@ -161,6 +161,12 @@ manus talstreck --in-place 01_del_ett/010_kapitel.md
 Utan filnamn tas hela boken, med samma regler som `manus bygg` - bara
 numrerade filer, bara numrerade mappar. Anteckningarna lämnas i fred.
 
+### Citat inuti en replik
+
+Skriv inre citat med enkla tecken: `'så här'`. De blir rätt av sig själva
+vid bygget - `’hej’` om dialogen har citattecken, `”hej”` om den har
+talstreck. Rör dem inte för hand.
+
 ### Det som lämnas orört
 
 Verktyget rör bara det som säkert är en replik. Är det en boktitel eller
