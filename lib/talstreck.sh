@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# manus pratminus - gör om citatrepliker till pratminus.
+# manus talstreck - gör om citatrepliker till talstreck.
 #
 #     ”Heter du Elof?” frågade Eva.   ->   -- Heter du Elof? frågade Eva.
 #
-# Svensk skönlitteratur sätter oftast repliker med pratminus i stället för
+# Svensk skönlitteratur sätter oftast repliker med talstreck i stället för
 # citattecken. Den som skrivit ett helt manus med citattecken, eller fått
 # text ur ett program som sätter dem automatiskt, vill inte gå igenom varje
 # replik för hand.
@@ -24,11 +24,11 @@ set -euo pipefail
 # En teckenklass [”“] matchar därför EN BYTE och slaktar tecknet. Därför
 # används alternation (”|“) genomgående här, aldrig klasser.
 
-readonly PROGNAME="${MANUS_COMMAND:-manus pratminus}"
+readonly PROGNAME="${MANUS_COMMAND:-manus talstreck}"
 
 show_help() {
     cat <<EOF
-$PROGNAME - gör om citatrepliker till pratminus.
+$PROGNAME - gör om citatrepliker till talstreck.
 För skönlitteratur: dialog i en roman, inte citat i en fackbok.
 
 ANVÄNDNING
@@ -43,7 +43,7 @@ ANVÄNDNING
     namn är ett medvetet val och går alltid att köra.
 
     Som förval läses varje FIL.md och en omgjord kopia skrivs bredvid den
-    som FIL.pratminus.md. Originalet ändras aldrig om du inte ger
+    som FIL.talstreck.md. Originalet ändras aldrig om du inte ger
     --in-place.
 
         ”Heter du Elof?” frågade Eva.
@@ -107,9 +107,9 @@ FLER ÄN EN REPLIK I STYCKET
         ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
         -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 
-    Pratminus markerar en REPLIKVÄXLING, inte varje yttrande. Samma person
+    Talstrecket markerar en REPLIKVÄXLING, inte varje yttrande. Samma person
     talar, det kommer en berättande beat, samma person fortsätter - allt är
-    en och samma tur. Därför sätts ett enda pratminus först i stycket, de
+    en och samma tur. Därför sätts ett enda talstreck först i stycket, de
     inre citattecknen faller bort, och stycket delas INTE. En delning
     skulle påstå att någon annan tar över.
 
@@ -121,7 +121,7 @@ FLER ÄN EN REPLIK I STYCKET
 
         -- Vad gör du? frågade hon.
 
-    Pratminus måste inleda stycket, och här är det en NY talartur som
+    Talstrecket måste inleda stycket, och här är det en NY talartur som
     börjar - till skillnad från fallet ovan, där samma tur fortsätter
     efter en beat. Berättandet blir ett eget stycke.
 
@@ -198,14 +198,14 @@ VAD SOM LÄMNAS I FRED
     Vill du ha tecknet direkt i källfilen ger --tankstreck det. Resultatet
     renderas likadant; skillnaden syns bara i .md-filen.
 
-    Skriv ALDRIG pratminus som ETT bindestreck. "- Vart är vi på väg?" är
+    Skriv ALDRIG talstreck som ETT bindestreck. "- Vart är vi på väg?" är
     listpunkt-syntax i Markdown och renderas som en punktlista.
 
 EXEMPEL
     Se efter vad som skulle ändras, rad för rad, utan att röra något:
         $PROGNAME --lista kapitel/*.md
 
-    Gör om ett kapitel, skriver Kapitel05.pratminus.md bredvid:
+    Gör om ett kapitel, skriver Kapitel05.talstreck.md bredvid:
         $PROGNAME Kapitel05.md
 
     Hela boken på plats, med säkerhetskopior:
@@ -283,7 +283,7 @@ if [ "${#files[@]}" -eq 0 ]; then
             \( -type d ! -name '.' ! -name '[0-9]*' -prune \) -o \
             \( -type f \
                \( -name '[0-9]*.md' -o -name '[0-9]*.txt' \) \
-               ! -name '*.pandoc.md' ! -name '*.pratminus.md' \
+               ! -name '*.pandoc.md' ! -name '*.talstreck.md' \
                -print0 \) \
             2>/dev/null | LC_ALL=C sort -z
     )
@@ -405,7 +405,7 @@ convert() {
                 #
                 # Saknas allt detta är det ett äkta citat - en titel, ett
                 # citerat ord - och det ska behålla sina citattecken. I ett
-                # pratminusmanus är de de enda som blir kvar.
+                # talstrecksmanus är de de enda som blir kvar.
                 # rest är nu texten EFTER det avslutande citattecknet.
                 is_speech = (inner ~ /(\.|!|\?|…|,)[ \t]*$/) ||
                             (substr(rest, 1, 1) == ",")
@@ -419,7 +419,7 @@ convert() {
                 if (!handled) {
                     handled = 1
 
-                    # Berättande FÖRE första repliken. Pratminus måste
+                    # Berättande FÖRE första repliken. Talstrecket måste
                     # inleda stycket, så berättandet blir ett eget stycke
                     # och repliken börjar nästa:
                     #
@@ -440,11 +440,11 @@ convert() {
                     continue
                 }
 
-                # Efterföljande replik i SAMMA stycke. Pratminus markerar en
+                # Efterföljande replik i SAMMA stycke. Talstrecket markerar en
                 # replikväxling, inte varje yttrande: samma person talar,
                 # det kommer en berättande beat, samma person fortsätter.
                 # Allt är en och samma tur. Citattecknen faller bort, men
-                # inget nytt pratminus sätts och stycket delas inte - en
+                # inget nytt talstreck sätts och stycket delas inte - en
                 # delning skulle påstå att någon annan tar över.
                 #
                 #   ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
@@ -623,7 +623,7 @@ process_file() {
         cp "$tmp_out" "$out"
         echo "Skrev: $out ($count repliker)"
     else
-        local out="${input%.md}.pratminus.md"
+        local out="${input%.md}.talstreck.md"
         cp "$tmp_out" "$out"
         echo "Skrev: $out ($count repliker)"
     fi
@@ -636,7 +636,7 @@ for f in "${files[@]}"; do
     fi
 
     # Den egna arbetslistan är genererad text, inte manus. Utan det här
-    # skulle 'pratminus *.md' läsa in sin egen rapport.
+    # skulle 'manus talstreck *.md' läsa in sin egen rapport.
     if [ "$(basename "$f")" = "$REPORT_NAME" ]; then
         continue
     fi

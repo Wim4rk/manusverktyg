@@ -34,11 +34,11 @@ uninstall:
 
 check:
 	@fel=0; \
-	for f in bin/manus lib/lint.sh lib/pratminus.sh lib/bygg.sh; do \
+	for f in bin/manus lib/lint.sh lib/talstreck.sh lib/bygg.sh; do \
 		if bash -n "$$f"; then echo "  syntax OK   $$f"; \
 		else echo "  SYNTAXFEL   $$f"; fel=1; fi; \
 	done; \
-	for f in bin/manus lib/lint.sh lib/pratminus.sh lib/bygg.sh; do \
+	for f in bin/manus lib/lint.sh lib/talstreck.sh lib/bygg.sh; do \
 		[ -x "$$f" ] || { echo "  INTE KÖRBAR $$f"; fel=1; }; \
 	done; \
 	for t in assets/custom-reference.docx assets/swedish-quotes.lua; do \

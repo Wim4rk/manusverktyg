@@ -121,9 +121,9 @@ när du bygger hela boken, för där vill du ha varningen kvar.
 
 ---
 
-## 5. Byta citattecken mot pratminus
+## 5. Byta citattecken mot talstreck
 
-Svensk skönlitteratur sätter oftast repliker med pratminus i stället för
+Svensk skönlitteratur sätter oftast repliker med talstreck i stället för
 citattecken. Har du skrivit med citattecken går de att byta:
 
 ```
@@ -134,7 +134,7 @@ citattecken. Har du skrivit med citattecken går de att byta:
 vad som skulle hända:
 
 ```bash
-manus pratminus --lista
+manus talstreck --lista
 ```
 
 Ingenting skrivs. Du får se varje stycke som skulle ändras, före och efter.
@@ -142,7 +142,7 @@ Ingenting skrivs. Du får se varje stycke som skulle ändras, före och efter.
 **Gör om på riktigt** när du är nöjd med vad du såg:
 
 ```bash
-manus pratminus --in-place
+manus talstreck --in-place
 ```
 
 Varje fil som ändras får en säkerhetskopia bredvid sig, med `.bak` sist i
@@ -150,12 +150,12 @@ namnet. Originalet finns alltså kvar.
 
 Vill du hellre titta på resultatet innan du släpper in det i manuset, kör
 utan `--in-place`. Då skrivs en kopia bredvid varje fil i stället, med
-`.pratminus` i namnet, och dina egna filer rörs inte alls.
+`.talstreck` i namnet, och dina egna filer rörs inte alls.
 
 **Enstaka fil:** skriv filnamnet efter kommandot.
 
 ```bash
-manus pratminus --in-place 01_del_ett/010_kapitel.md
+manus talstreck --in-place 01_del_ett/010_kapitel.md
 ```
 
 Utan filnamn tas hela boken, med samma regler som `manus bygg` - bara
@@ -171,7 +171,7 @@ ett citerat ord lämnas det ifred:
 ```
 
 Talar samma person både före och efter en berättande beat är det en enda
-replik, och den behåller ett enda pratminus:
+replik, och den behåller ett enda talstreck:
 
 ```
 ”Jag gjorde det.” Han såg bort. ”Det var nödvändigt.”
@@ -179,7 +179,7 @@ replik, och den behåller ett enda pratminus:
 ```
 
 Står repliken mitt i ett stycke bryts stycket, eftersom en ny talare tar
-vid och pratminus måste inleda stycket:
+vid och talstrecket måste inleda stycket:
 
 ```
 Hon vände sig om. ”Vad gör du?” frågade hon.

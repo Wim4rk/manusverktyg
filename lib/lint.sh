@@ -134,14 +134,14 @@ SÅ HITTAS MENINGARNA
     Ingenting tas någonsin bort, så en missad brytning kostar dig en lång rad
     och ingenting annat.
 
-REPLIKER OCH PRATMINUS
-    Skriv pratminus som TVÅ bindestreck:
+REPLIKER OCH TALSTRECK
+    Skriv talstreck som TVÅ bindestreck:
         -- Vart är vi på väg? frågade hon.
     Pandoc gör om -- till ett riktigt tankstreck (–) åt dig. Anföringen hålls
     ihop med repliken av gemen-regeln ovan, precis som med citattecken, så
     raden delas inte mellan "väg?" och "frågade".
 
-    Skriv INTE pratminus som ett ensamt bindestreck. "- Vart är vi på väg?"
+    Skriv INTE talstreck som ett ensamt bindestreck. "- Vart är vi på väg?"
     är listpunkt-syntax i Markdown, och Pandoc renderar den som en punktlista
     - inte som en replik. Skriptet låter den stå kvar orörd just därför: den
     är omöjlig att skilja från en riktig lista, och att gissa fel vore värre.

@@ -9,7 +9,7 @@ kommandot: `manus`.
 ```bash
 manus lint       # en mening per rad, städade mellanslag
 manus bygg       # kör Pandoc på alla numrerade dokument, i nummerordning
-manus pratminus  # ändrar citatrepliker till pratminus
+manus talstreck  # ändrar citatrepliker till talstreck
 ```
 
 Allt - kommandon, hjälptexter och dokumentation - är på svenska.
@@ -179,10 +179,10 @@ texten bryts. Behöver du exakta radbrytningar, som i en dikt, använd
 radblock: börja varje rad med `| `. Ett utskrivet `<br>` fungerar i EPUB men
 försvinner i DOCX.
 
-## Repliker: citattecken till pratminus
+## Repliker: citattecken till talstreck
 
-Svensk skönlitteratur sätter oftast repliker med pratminus. Har du ett
-manus skrivet med citattecken gör `manus pratminus` om dem:
+Svensk skönlitteratur sätter oftast repliker med talstreck. Har du ett
+manus skrivet med citattecken gör `manus talstreck` om dem:
 
 ```
 ”Heter du Elof?” frågade Eva.   →   -- Heter du Elof? frågade Eva.
@@ -193,8 +193,8 @@ bara namn som börjar med en siffra, och bara genom numrerade kataloger.
 Anteckningar, research och makulatur hålls utanför här också.
 
 ```bash
-manus pratminus --lista              # hela boken, bygg-reglerna
-manus pratminus skisser/utkast.md    # en utpekad fil, oavsett namn
+manus talstreck --lista              # hela boken, bygg-reglerna
+manus talstreck skisser/utkast.md    # en utpekad fil, oavsett namn
 ```
 
 Pekar du ut en fil gäller precis den, oavsett vad den heter - ett utpekat
@@ -228,8 +228,8 @@ replik, berättande, replik i ett och samma stycke:
 -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 ```
 
-Pratminus markerar en **replikväxling**, inte varje yttrande. Samma person
-talar, berättar, fortsätter - en och samma tur. Därför ett enda pratminus
+Talstrecket markerar en **replikväxling**, inte varje yttrande. Samma person
+talar, berättar, fortsätter - en och samma tur. Därför ett enda talstreck
 först i stycket, inga inre citattecken, ingen delning. En delning skulle
 påstå att någon annan tar över.
 
@@ -310,7 +310,7 @@ lista alls.
 
 > **Ordningen mot `manus lint` spelar ingen roll.** Båda arbetar på
 > stycken, och ett stycke är samma sak före och efter lint. Vill du ha en
-> mening per rad även i de omgjorda replikerna, kör lint sist - pratminus
+> mening per rad även i de omgjorda replikerna, kör lint sist - `manus talstreck`
 > fogar ihop stycket det skrivit om till en rad.
 
 Förvalet är två bindestreck, eftersom Pandoc gör om `--` till ett riktigt
@@ -515,9 +515,9 @@ se [PANDOC.md](PANDOC.md#5-skapa-manus-mallen-manus-malldocx---en-gång).
 ## Projektets katalogstruktur
 
 ```
-bin/manus              vägvisaren: manus lint / pratminus / bygg
+bin/manus              vägvisaren: manus lint / talstreck / bygg
 lib/lint.sh            städaren
-lib/pratminus.sh       replikomvandlaren
+lib/talstreck.sh       replikomvandlaren
 lib/bygg.sh            pandoc-körningen
 assets/                stilmallar och lua-filter
 ```
