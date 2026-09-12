@@ -176,7 +176,7 @@ ett citerat ord lämnas det ifred:
 ”Nomen libri” är arbetsnamnet.     ← lämnas orörd, det är ingen replik
 ```
 
-Talar samma person både före och efter en berättande beat är det en enda
+Talar samma person både före och efter en inskjuten handling är det en enda
 replik, och den behåller ett enda talstreck:
 
 ```

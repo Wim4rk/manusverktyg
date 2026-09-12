@@ -108,7 +108,7 @@ FLER ÄN EN REPLIK I STYCKET
         -- Jag gjorde det. Han såg bort. Det var nödvändigt.
 
     Talstrecket markerar en REPLIKVÄXLING, inte varje yttrande. Samma person
-    talar, det kommer en berättande beat, samma person fortsätter - allt är
+    talar, en handling skjuts in, samma person fortsätter - allt är
     en och samma tur. Därför sätts ett enda talstreck först i stycket, de
     inre citattecknen faller bort, och stycket delas INTE. En delning
     skulle påstå att någon annan tar över.
@@ -123,7 +123,7 @@ FLER ÄN EN REPLIK I STYCKET
 
     Talstrecket måste inleda stycket, och här är det en NY talartur som
     börjar - till skillnad från fallet ovan, där samma tur fortsätter
-    efter en beat. Berättandet blir ett eget stycke.
+    efter en inskjuten handling. Berättandet blir ett eget stycke.
 
 STYCKET ÄR ENHETEN, INTE RADEN
     Framåtläsningen går över radgränser men stannar ALLTID vid tomraden.
@@ -442,7 +442,7 @@ convert() {
 
                 # Efterföljande replik i SAMMA stycke. Talstrecket markerar en
                 # replikväxling, inte varje yttrande: samma person talar,
-                # det kommer en berättande beat, samma person fortsätter.
+                # en handling skjuts in, samma person fortsätter.
                 # Allt är en och samma tur. Citattecknen faller bort, men
                 # inget nytt talstreck sätts och stycket delas inte - en
                 # delning skulle påstå att någon annan tar över.
