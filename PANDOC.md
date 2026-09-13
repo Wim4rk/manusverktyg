@@ -20,27 +20,16 @@ Installera Pandoc (en gång): `sudo apt install pandoc`. Kontrollera med
 
 ---
 
-## 1. Städa texten först
+## 1. Rendera ett enda kapitel för korrektur
 
-`manus lint` lägger en mening per rad och normaliserar tomrader. Det ändrar
-bara källfilen, aldrig det renderade resultatet - se
-[HANDBOK](HANDBOK.md#städa-texten-manus-lint).
-
-Numreringen som styr kapitelordningen beskrivs i
-[HANDBOK](HANDBOK.md#vilka-filer-tas-med-och-i-vilken-ordning).
-
----
-
-## 2. Rendera ett enda kapitel för korrektur
-
-Inget bokbygge behövs - en fil in, en fil ut:
+Inget bokbygge - en fil in, en fil ut:
 ```bash
 pandoc Kapitel05.pandoc.md -o Kapitel05-korr.pdf
 ```
 
 ---
 
-## 3. Rendera en hel bok
+## 2. Rendera en hel bok
 
 Ställ dig i bokens katalog och kör `manus bygg`. Den letar upp de numrerade
 filerna och kör Pandoc på alltihop, i nummerordning:
@@ -53,14 +42,14 @@ filerna och kör Pandoc på alltihop, i nummerordning:
 099_efterord.md
 ```
 
-**Kontrollera alltid ordningen först.** Fel kapitelordning är det enda felet
+**Kontrollera ordningen.** Fel kapitelordning är det enda felet
 som inte syns förrän någon läser boken:
 
 ```bash
 manus bygg --lista
 ```
 
-### PDF - det vanligaste
+### PDF
 
 ```bash
 manus bygg -o MinBok.pdf -- \
@@ -74,8 +63,6 @@ manus bygg -o MinBok.pdf -- \
   --metadata title="Nomen libri" \
   --metadata author="Scriptor Sum"
 ```
-
-Testat och verifierat i sin helhet. Några ord om varje del:
 
 * Allt efter `--` går rakt vidare till Pandoc.
 * `--pdf-engine=xelatex` behövs för att `mainfont` ska fungera alls. Utan
@@ -98,9 +85,9 @@ Testat och verifierat i sin helhet. Några ord om varje del:
   `-- --metadata-file=metadata.yaml` (se avsnitt 4).
 
 Stilmallen `custom-reference.docx` och `swedish-quotes.lua` plockas upp
-automatiskt - se avsnitt 3.1. För PDF spelar bara filtret roll.
+automatiskt - se avsnitt 3.. För PDF spelar bara filtret roll.
 
-### EPUB - för alfa-/betaläsare. Eller självpublicering...
+### EPUB - för alfa-/betaläsare. Eller självpublicering?
 
 ```bash
 manus bygg -o MinBok.epub -- --toc --metadata title="Nomen libri"
@@ -130,7 +117,7 @@ i olika delar av boken inte skriver över varandra.
 
 ---
 
-## 3.1 Byggtillgångar
+## 3. Byggtillgångar - assets
 
 `manus bygg` plockar upp `custom-reference.docx` och `swedish-quotes.lua`
 automatiskt och skriver ut vilka den hittade. Sökordningen och flaggorna
@@ -139,8 +126,8 @@ automatiskt och skriver ut vilka den hittade. Sökordningen och flaggorna
 
 ### Utan skripten, för hand
 
-Om du hellre kör Pandoc direkt: aktivera `globstar` en gång per skal-session
-så `**` letar rekursivt, och skriv ut allt själv.
+Om du hellre kör Pandoc direkt: aktivera `globstar` en gång per bash-session
+så letar `**` rekursivt, och skriv ut allt själv.
 
 ```bash
 shopt -s globstar
@@ -153,14 +140,13 @@ pandoc MinBok/**/*.md \
 ```
 
 Skillnaden mot `manus bygg` är att `**/*.md` tar med *alla* markdown-filer,
-även utkast och anteckningar som inte hör till boken. Det är därför
-numrerade filnamn finns.
+även utkast och anteckningar som inte hör till boken.
 
 ---
 
 ## 4. Metadata (front matter)
 
-Ett `metadata.yaml` i bokens rotkatalog:
+Lägg en yaml-fil (t. ex.) `metadata.yaml` i bokens rotkatalog: 
 ```yaml
 ---
 title: "Nomen libri"
@@ -169,26 +155,27 @@ lang: sv
 ---
 ```
 Peka på filen med `--metadata-file=` som i exemplen ovan. Du kan också skriva
-samma block överst i EN av kapitelfilerna istället, men en gemensam fil för
+samma block överst i _en_ av kapitelfilerna istället, men en gemensam fil för
 hela boken är enklare att hålla koll på.
 
 ---
 
-## 5. Skapa manus-mallen (`manus-mall.docx`) - en gång
+## 5. Stilmall
 
-Pandoc kan inte styras att skriva "rent" manusformat via flaggor allena - det
-är en Word-mall vars stilar Pandoc målar om till. Generera en startmall:
+Pandoc använder en stilmall för att formatera ditt manus. Det är en Word-fil
+vars stilar Pandoc målar om till. Du kan be Pandoc skapa en sådan åt dig.
+
 ```bash
 pandoc -o manus-mall.docx --print-default-data-file reference.docx
 ```
-Öppna den i Word/LibreOffice och justera dessa stilar (bara dessa spelar
-roll för Pandocs output):
+Öppna den i Word/LibreOffice och justera stilarna så de passar ditt manus.
+För Pandoc är det dessa stilar som spelar roll:
 
 | Stil            | Vad den styr                          | Förslag |
-|-----------------|----------------------------------------|---------|
-| `Normal`        | Brödtext                              | Times New Roman 12pt, dubbelt radavstånd, indragen första rad |
-| `Title`         | Bokens titel (från metadata)          | Centrerad, egen sida |
-| `Heading 1`     | Kapitelrubriker                        | Ny sida, enkel, ej dekorerad |
+|-----------------|---------------------------------------|---------|
+| `Normal`        | Brödtext                              | Georgia 12pt, dubbelt radavstånd, indragen första rad |
+| `Title`         | Bokens titel                          | Centrerad, egen sida |
+| `Heading 1`     | Kapitelrubriker                       | Ny sida, enkel, ej dekorerad |
 | `First Paragraph` | Första stycket efter en rubrik (ska ofta INTE vara indraget) | Ingen indragning |
 
 Spara - mallen återanvänds sedan av alla framtida `--reference-doc`-anrop,
@@ -201,7 +188,7 @@ ingen anledning att röra skriptet eller kommandona igen.
 * `--toc` - infoga innehållsförteckning.
 * `--metadata-file=fil.yaml` - titel/författare/språk m.m.
 * `--reference-doc=fil.docx` - stilmall för DOCX-utdata.
-* `-V namn=värde` - sätt en mallvariabel (typsnitt, marginaler, m.m. för PDF).
+* `-V namn=värde` - sätt en mallvariabel (typsnitt, marginaler, m.m. för PDF, se ovan).
 * `--pdf-engine=xelatex` - krävs för egna typsnitt i PDF.
 * `-o fil.ext` - Pandoc gissar format från filändelsen (`.epub`, `.docx`, `.pdf`).
 
@@ -209,7 +196,7 @@ ingen anledning att röra skriptet eller kommandona igen.
 
 ## 7. Dolda kommentarer
 
-Skriv `<!-- anteckning -->`. Det fungerar både på en egen rad och mitt inne
+Skriv `<!-- anteckningar -->` just så. Det fungerar både på en egen rad och mitt inne
 i ett stycke, och är osynligt i alla Pandoc-format.
 
 En kommentar får gå över flera rader - `manus lint` lämnar allt mellan

@@ -1,7 +1,7 @@
 # Kvickguide
 
 Kommandona, så länge allt går rätt. Går något fel, eller vill du veta
-varför: [HANDBOK.md](HANDBOK.md).
+varför det går bra: [HANDBOK.md](HANDBOK.md).
 
 Öppna terminalen och gå till bokens mapp. Verktyget arbetar med mappen du
 står i. Vill du veta var du står: skriv `pwd` och tryck retur.
@@ -20,10 +20,10 @@ Ställ dig i mappen med verktygen och skriv `make install`.
 
 ---
 
-## 1. Hela boken
+## 1. Bygga en hel bok
 
-Kontrollera ordningen först. Det skriver bara ut vilka filer som kommer
-med, och bygger ingenting:
+Om du vill kan du kontrollera ordningen först. Det skriver bara ut vilka
+filer som kommer med, och bygger ingenting:
 
 ```bash
 manus bygg --lista
@@ -32,7 +32,8 @@ manus bygg --lista
 Bygg sedan:
 
 ```bash
-manus bygg -o bok.docx
+manus bygg -o bok.docx                                # Word-dokument
+# eller
 manus bygg -o bok.pdf -- --pdf-engine=xelatex --toc   # PDF med innehåll
 ```
 
@@ -91,7 +92,7 @@ manus talstreck --in-place
 manus talstreck --in-place 01_del_ett/010_kapitel.md   # en enda fil
 ```
 
-Skriv inre citat med enkla tecken, `'så här'`. De blir rätt vid bygget.
+Skriv _alltid_ inre citat med enkla tecken, `'så här'`. De blir rätt vid bygget.
 
 ---
 

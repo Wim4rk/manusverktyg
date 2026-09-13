@@ -18,8 +18,8 @@ Pandocs egna flaggor, format och markdown-dialekt står i [PANDOC.md](PANDOC.md)
 Sökningen går **rekursivt** genom hela trädet under katalogen du står i -
 men bara genom **numrerade** kataloger.
 
-|               | Krav                 | Förslag |
-| ------------- | -------------------- | --------------------------------------- |
+|               | Krav                  | Förslag |
+| ------------- | --------------------- | --------------------------------------- |
 | **Filer**     | minst en siffra först | tre siffror ger luft att skjuta in ett kapitel: `010`, `020`, `021` |
 | **Kataloger** | minst en siffra först | två räcker, delar är få: `01_kapitel_ett`, `02_kapitel_tva` |
 
